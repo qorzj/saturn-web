@@ -1,0 +1,306 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Saturn API",
+    "description": "Saturn is a note-taking web application (binfer) built with Python lessweb framework and TypeScript. It provides markdown-based note editing with auto web content grabbing and AI summarization features.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "qorzj",
+      "email": "goodhorsezxj@gmail.com"
+    },
+    "license": {
+      "name": "Private"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/api/note/save": {
+      "post": {
+        "summary": "Save note",
+        "description": "Creates or updates a note. If content_md is a single URL, it will grab the web content and generate an AI summary. Empty content deletes the note.",
+        "operationId": "postApiNoteSave",
+        "tags": ["Note API"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveNoteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Note is locked or invalid slug format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mgr/note": {
+      "get": {
+        "summary": "List all notes",
+        "description": "Returns a paginated list of all notes, optionally filtered by slug",
+        "operationId": "getAllNotes",
+        "tags": ["Note Management"],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "description": "Filter by specific slug",
+            "schema": {
+              "type": "string",
+              "example": "my-note-123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedListMgrNoteDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mgr/note/{slug}": {
+      "get": {
+        "summary": "Get note by slug",
+        "description": "Returns a single note by its slug",
+        "operationId": "getNoteBySlug",
+        "tags": ["Note Management"],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "Note identifier",
+            "schema": {
+              "type": "string",
+              "example": "my-note-123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMgrNoteDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete note by slug",
+        "description": "Permanently deletes a note",
+        "operationId": "deleteNoteBySlug",
+        "tags": ["Note Management"],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "Note identifier",
+            "schema": {
+              "type": "string",
+              "example": "my-note-123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SaveNoteInput": {
+        "type": "object",
+        "required": ["slug", "contentMd", "isLocked"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Note identifier (lowercase letters, digits, and hyphens only)",
+            "pattern": "^[a-z0-9-]+$",
+            "example": "my-note-123"
+          },
+          "contentMd": {
+            "type": "string",
+            "description": "Markdown content. If it's a single URL, web content will be grabbed and summarized.",
+            "example": "# My Note Title\n\nThis is my note content in markdown."
+          },
+          "isLocked": {
+            "type": "integer",
+            "description": "Lock status (0: unlocked, 1: locked). Locked notes cannot be edited.",
+            "enum": [0, 1],
+            "example": 0
+          }
+        }
+      },
+      "ListMgrNoteDto": {
+        "type": "object",
+        "required": [
+          "slug",
+          "contentMd",
+          "title",
+          "contentHtml",
+          "isLocked",
+          "createTime",
+          "updateTime",
+          "createIp",
+          "updateIp",
+          "uv"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Note identifier",
+            "example": "my-note-123"
+          },
+          "contentMd": {
+            "type": "string",
+            "description": "Markdown content",
+            "example": "# My Note\n\nContent here"
+          },
+          "title": {
+            "type": "string",
+            "description": "Note title (extracted from first H1 heading or defaults to slug)",
+            "example": "My Note"
+          },
+          "contentHtml": {
+            "type": "string",
+            "description": "Rendered HTML content (deprecated - no longer used)",
+            "deprecated": true,
+            "example": "<h1>My Note</h1>\n<p>Content here</p>"
+          },
+          "isLocked": {
+            "type": "integer",
+            "description": "Lock status (0: unlocked, 1: locked)",
+            "enum": [0, 1],
+            "example": 0
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2024-01-15T10:30:00Z"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2024-01-16T15:45:00Z"
+          },
+          "createIp": {
+            "type": "string",
+            "description": "IP address of creator",
+            "example": "192.168.1.100"
+          },
+          "updateIp": {
+            "type": "string",
+            "description": "IP address of last updater",
+            "example": "192.168.1.100"
+          },
+          "uv": {
+            "type": "integer",
+            "description": "Unique visitors count",
+            "example": 42
+          }
+        }
+      },
+      "PagedListMgrNoteDto": {
+        "type": "object",
+        "required": ["items", "total", "page", "size"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListMgrNoteDto"
+            },
+            "description": "List of notes"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of notes",
+            "example": 100
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number (1-indexed)",
+            "example": 1
+          },
+          "size": {
+            "type": "string",
+            "description": "Page size or 'ALL' for all items",
+            "example": "ALL"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "note is locked"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Note API",
+      "description": "REST API for note operations"
+    },
+    {
+      "name": "Note Management",
+      "description": "Management API for note administration"
+    }
+  ]
+}
