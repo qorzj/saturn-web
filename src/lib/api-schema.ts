@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/public/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * User login
+         * @description Authenticates a user with username and password. Returns a JWT token for subsequent API calls.
+         */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/note/save": {
         parameters: {
             query?: never;
@@ -92,6 +112,38 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        LoginRequest: {
+            /**
+             * @description Username for authentication
+             * @example root
+             */
+            userName: string;
+            /**
+             * Format: password
+             * @description Password for authentication
+             * @example your-password
+             */
+            password: string;
+        };
+        LoginResponse: {
+            /**
+             * @description JWT token for subsequent API calls
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            token: string;
+        };
+        Failed: {
+            /**
+             * @description Error code (-1 for general errors)
+             * @example -1
+             */
+            code: number;
+            /**
+             * @description Error message
+             * @example 用户名或密码错误
+             */
+            message: string;
+        };
         SaveNoteInput: {
             /**
              * @description Note identifier (lowercase letters, digits, and hyphens only)
@@ -243,6 +295,39 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Login successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Invalid username or password */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Failed"];
+                };
+            };
+        };
+    };
     postApiNoteSave: {
         parameters: {
             query?: never;
@@ -271,7 +356,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Error"];
+                    "application/json": components["schemas"]["Failed"];
                 };
             };
         };

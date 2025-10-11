@@ -19,12 +19,57 @@
     }
   ],
   "paths": {
+    "/public/login": {
+      "post": {
+        "summary": "User login",
+        "description": "Authenticates a user with username and password. Returns a JWT token for subsequent API calls.",
+        "operationId": "login",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid username or password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/note/save": {
       "post": {
         "summary": "Save note",
         "description": "Creates or updates a note. If content_md is a single URL, it will grab the web content and generate an AI summary. Empty content deletes the note.",
         "operationId": "postApiNoteSave",
         "tags": ["Note API"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -51,7 +96,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Failed"
                 }
               }
             }
@@ -65,6 +110,11 @@
         "description": "Searches notes using vector similarity (RAG). Returns notes with cosine similarity above the threshold (default 0.65), sorted by similarity score in descending order.",
         "operationId": "searchNotesBySimilarity",
         "tags": ["Note API"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "query",
@@ -100,6 +150,11 @@
         "description": "Returns a paginated list of all notes, optionally filtered by slug",
         "operationId": "getAllNotes",
         "tags": ["Note Management"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "slug",
@@ -132,6 +187,11 @@
         "description": "Returns a single note by its slug",
         "operationId": "getNoteBySlug",
         "tags": ["Note Management"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "slug",
@@ -165,6 +225,11 @@
         "description": "Permanently deletes a note",
         "operationId": "deleteNoteBySlug",
         "tags": ["Note Management"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "slug",
@@ -193,7 +258,59 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained from /public/login endpoint. Include in Authorization header as 'Bearer <token>'"
+      }
+    },
     "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["userName", "password"],
+        "properties": {
+          "userName": {
+            "type": "string",
+            "description": "Username for authentication",
+            "example": "root"
+          },
+          "password": {
+            "type": "string",
+            "description": "Password for authentication",
+            "format": "password",
+            "example": "your-password"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT token for subsequent API calls",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "Failed": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Error code (-1 for general errors)",
+            "example": -1
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "用户名或密码错误"
+          }
+        }
+      },
       "SaveNoteInput": {
         "type": "object",
         "required": ["slug", "contentMd", "isLocked"],
@@ -377,6 +494,10 @@
     }
   },
   "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and authorization"
+    },
     {
       "name": "Note API",
       "description": "REST API for note operations"
