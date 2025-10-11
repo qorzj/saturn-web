@@ -73,16 +73,19 @@ export default function NotePage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Auto-resize textarea on mount and when entering edit mode
+  // Auto-resize textarea only when entering edit mode (not on every content change)
   useEffect(() => {
     if (isEditing) {
       const textarea = document.getElementById('content-md') as HTMLTextAreaElement;
       if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.max(200, textarea.scrollHeight) + 'px';
+        // Use setTimeout to ensure the textarea is rendered with current content
+        setTimeout(() => {
+          textarea.style.height = 'auto';
+          textarea.style.height = Math.max(200, textarea.scrollHeight) + 'px';
+        }, 0);
       }
     }
-  }, [isEditing, contentMd]);
+  }, [isEditing]); // Only depend on isEditing, not contentMd
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -143,6 +146,28 @@ export default function NotePage() {
     setHasUnsavedChanges(true);
   };
 
+  const handleDelete = useCallback(async () => {
+    if (!confirm('Are you sure you want to delete this note?')) {
+      return;
+    }
+
+    try {
+      const { error } = await apiClient.DELETE('/mgr/note/{slug}', {
+        params: { path: { slug } },
+      });
+
+      if (!error) {
+        // Reload the page with the same slug (will create a new empty note)
+        window.location.reload();
+      } else {
+        alert('Failed to delete note');
+      }
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+      alert('Failed to delete note');
+    }
+  }, [slug]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -188,10 +213,25 @@ export default function NotePage() {
                         }}
                         value={contentMd}
                         onChange={(e) => {
+                          const target = e.target;
+                          const cursorPosition = target.selectionStart;
+
                           handleContentChange(e);
-                          // Auto-resize textarea
-                          e.target.style.height = 'auto';
-                          e.target.style.height = Math.max(200, e.target.scrollHeight) + 'px';
+
+                          // Auto-resize textarea while preserving cursor position
+                          requestAnimationFrame(() => {
+                            const currentHeight = target.scrollHeight;
+                            const newHeight = Math.max(200, currentHeight);
+
+                            // Only update height if it actually needs to change
+                            if (target.style.height !== `${newHeight}px`) {
+                              target.style.height = 'auto';
+                              target.style.height = `${newHeight}px`;
+
+                              // Restore cursor position
+                              target.setSelectionRange(cursorPosition, cursorPosition);
+                            }
+                          });
                         }}
                         placeholder="Enter markdown content..."
                       />
@@ -265,22 +305,41 @@ export default function NotePage() {
         </main>
         <footer className="page-footer" style={{ backgroundColor: '#E9E9E9' }}>
           <div className="footer-copyright" style={{ padding: '10px 0' }}>
-            <div className="container mx-auto px-4 text-[#9e9e9e]">
-              <Link href="/how-to-use" className="text-[#626262] no-underline">
-                How to Use
-              </Link>
-              {!note?.isLocked && !isEditing && note?.contentMd && (
-                <>
-                  {' '}
+            <div className="container mx-auto px-4 text-[#9e9e9e]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+              <div>
+                <Link href="/how-to-use" className="text-[#626262] no-underline">
+                  How to Use
+                </Link>
+                {!note?.isLocked && !isEditing && note?.contentMd && (
+                  <>
+                    {' '}
+                    <button
+                      onClick={handleEdit}
+                      className="text-[#626262] no-underline inline-flex items-center"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    >
+                      <i className="material-icons tiny" style={{ fontSize: '18px' }}>edit</i>
+                    </button>
+                  </>
+                )}
+              </div>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+                <Link href="/search" className="text-[#626262] no-underline inline-flex items-center">
+                  <i className="material-icons tiny" style={{ fontSize: '18px' }}>search</i>
+                </Link>
+              </div>
+              <div>
+                {note?.contentMd && (
                   <button
-                    onClick={handleEdit}
+                    onClick={handleDelete}
                     className="text-[#626262] no-underline inline-flex items-center"
                     style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    title="Delete note"
                   >
-                    <i className="material-icons tiny" style={{ fontSize: '18px' }}>edit</i>
+                    <i className="material-icons tiny" style={{ fontSize: '18px' }}>delete</i>
                   </button>
-                </>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </footer>

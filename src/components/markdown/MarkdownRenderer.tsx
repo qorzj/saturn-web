@@ -11,9 +11,10 @@ import { useEffect } from 'react';
 
 interface MarkdownRendererProps {
   content: string;
+  allowRawHtml?: boolean;
 }
 
-export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, allowRawHtml = true }: MarkdownRendererProps) {
   const containsMath = content.includes('$$') || content.includes('$');
   const containsMermaid = content.includes('```mermaid');
 
@@ -32,7 +33,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
         rehypePlugins={[
-          rehypeRaw,
+          ...(allowRawHtml ? [rehypeRaw] : []),
           rehypeHighlight,
           ...(containsMath ? [rehypeKatex] : []),
         ]}

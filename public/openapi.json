@@ -59,6 +59,41 @@
         }
       }
     },
+    "/api/note/search": {
+      "get": {
+        "summary": "Search notes by similarity",
+        "description": "Searches notes using vector similarity (RAG). Returns notes with cosine similarity above the threshold (default 0.65), sorted by similarity score in descending order.",
+        "operationId": "searchNotesBySimilarity",
+        "tags": ["Note API"],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Search query text",
+            "schema": {
+              "type": "string",
+              "example": "Python async programming"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of similar notes (not paginated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListSearchNoteDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/mgr/note": {
       "get": {
         "summary": "List all notes",
@@ -278,6 +313,54 @@
             "type": "string",
             "description": "Page size or 'ALL' for all items",
             "example": "ALL"
+          }
+        }
+      },
+      "ListSearchNoteDto": {
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "contentMd",
+          "similarity",
+          "createTime",
+          "updateTime"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Note identifier",
+            "example": "python-async-guide"
+          },
+          "title": {
+            "type": "string",
+            "description": "Note title",
+            "example": "Python Async Programming Guide"
+          },
+          "contentMd": {
+            "type": "string",
+            "description": "Markdown content",
+            "example": "# Python Async Programming\n\nThis is a guide about async programming..."
+          },
+          "similarity": {
+            "type": "number",
+            "format": "float",
+            "description": "Cosine similarity score (0-1), where 1 means identical and 0 means completely unrelated",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.8523
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2024-01-15T10:30:00Z"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2024-01-16T15:45:00Z"
           }
         }
       },

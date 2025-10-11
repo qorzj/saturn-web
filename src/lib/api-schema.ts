@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/note/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search notes by similarity
+         * @description Searches notes using vector similarity (RAG). Returns notes with cosine similarity above the threshold (default 0.65), sorted by similarity score in descending order.
+         */
+        get: operations["searchNotesBySimilarity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/mgr/note": {
         parameters: {
             query?: never;
@@ -170,6 +190,43 @@ export interface components {
              */
             size: string;
         };
+        ListSearchNoteDto: {
+            /**
+             * @description Note identifier
+             * @example python-async-guide
+             */
+            slug: string;
+            /**
+             * @description Note title
+             * @example Python Async Programming Guide
+             */
+            title: string;
+            /**
+             * @description Markdown content
+             * @example # Python Async Programming
+             *
+             *     This is a guide about async programming...
+             */
+            contentMd: string;
+            /**
+             * Format: float
+             * @description Cosine similarity score (0-1), where 1 means identical and 0 means completely unrelated
+             * @example 0.8523
+             */
+            similarity: number;
+            /**
+             * Format: date-time
+             * @description Creation timestamp
+             * @example 2024-01-15T10:30:00Z
+             */
+            createTime: string;
+            /**
+             * Format: date-time
+             * @description Last update timestamp
+             * @example 2024-01-16T15:45:00Z
+             */
+            updateTime: string;
+        };
         Error: {
             /**
              * @description Error message
@@ -215,6 +272,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    searchNotesBySimilarity: {
+        parameters: {
+            query: {
+                /** @description Search query text */
+                query: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of similar notes (not paginated) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListSearchNoteDto"][];
                 };
             };
         };
