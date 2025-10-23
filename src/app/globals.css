@@ -195,6 +195,14 @@ a.no-underline:hover {
   padding-left: 2em;
 }
 
+.markdown-body ol {
+  list-style-type: decimal;
+}
+
+.markdown-body ul {
+  list-style-type: disc;
+}
+
 .markdown-body ol.no-list,.markdown-body ul.no-list {
   list-style-type: none;
   padding: 0;
