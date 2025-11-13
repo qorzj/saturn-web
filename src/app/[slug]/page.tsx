@@ -8,9 +8,10 @@ import MarkdownRenderer from '@/components/markdown/MarkdownRenderer';
 
 interface Note {
   slug: string;
+  innerSlug?: string | null;
   contentMd: string;
   title: string;
-  isLocked: number;
+  isShared: number;
   uv: number;
 }
 
@@ -29,8 +30,8 @@ export default function NotePage() {
   const fetchNote = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await apiClient.GET('/mgr/note/{slug}', {
-        params: { path: { slug } },
+      const { data, error } = await apiClient.GET('/mgr/note/{inner_slug}', {
+        params: { path: { inner_slug: slug } },
       });
 
       if (data) {
@@ -95,7 +96,7 @@ export default function NotePage() {
         body: {
           slug,
           contentMd: contentMd.trim(),
-          isLocked: 0,
+          isShared: (note?.isShared ?? 0) as 0 | 1, // Keep existing share status or default to private
         },
       });
 
@@ -114,7 +115,7 @@ export default function NotePage() {
     } finally {
       setIsSaving(false);
     }
-  }, [slug, contentMd]);
+  }, [slug, contentMd, note?.isShared]);
 
   // Command+Enter to save
   useEffect(() => {
@@ -167,6 +168,37 @@ export default function NotePage() {
       alert('Failed to delete note');
     }
   }, [slug]);
+
+  const handleToggleShare = useCallback(async () => {
+    if (!note) return;
+
+    const newIsShared = note.isShared === 1 ? 0 : 1;
+    const action = newIsShared === 1 ? 'share' : 'unshare';
+
+    if (!confirm(`Are you sure you want to ${action} this note?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await apiClient.POST('/api/note/save', {
+        body: {
+          slug,
+          contentMd: note.contentMd,
+          isShared: newIsShared as 0 | 1,
+        },
+      });
+
+      if (!error) {
+        // Reload to show updated share status
+        window.location.reload();
+      } else {
+        alert(`Failed to ${action} note`);
+      }
+    } catch (err) {
+      console.error(`Failed to ${action} note:`, err);
+      alert(`Failed to ${action} note`);
+    }
+  }, [slug, note]);
 
   if (isLoading) {
     return (
@@ -310,13 +342,14 @@ export default function NotePage() {
                 <Link href="/how-to-use" className="text-[#626262] no-underline">
                   How to Use
                 </Link>
-                {!note?.isLocked && !isEditing && note?.contentMd && (
+                {!isEditing && note?.contentMd && (
                   <>
                     {' '}
                     <button
                       onClick={handleEdit}
                       className="text-[#626262] no-underline inline-flex items-center"
                       style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                      title="Edit note"
                     >
                       <i className="material-icons tiny" style={{ fontSize: '18px' }}>edit</i>
                     </button>
@@ -330,14 +363,26 @@ export default function NotePage() {
               </div>
               <div>
                 {note?.contentMd && (
-                  <button
-                    onClick={handleDelete}
-                    className="text-[#626262] no-underline inline-flex items-center"
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                    title="Delete note"
-                  >
-                    <i className="material-icons tiny" style={{ fontSize: '18px' }}>delete</i>
-                  </button>
+                  <>
+                    <button
+                      onClick={handleToggleShare}
+                      className="text-[#626262] no-underline inline-flex items-center"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', marginRight: '12px' }}
+                      title={note.isShared === 1 ? 'Unshare note (currently shared)' : 'Share note (currently private)'}
+                    >
+                      <i className="material-icons tiny" style={{ fontSize: '18px' }}>
+                        {note.isShared === 1 ? 'lock_open' : 'lock'}
+                      </i>
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="text-[#626262] no-underline inline-flex items-center"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                      title="Delete note"
+                    >
+                      <i className="material-icons tiny" style={{ fontSize: '18px' }}>delete</i>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
