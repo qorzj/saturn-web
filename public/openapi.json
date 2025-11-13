@@ -59,6 +59,46 @@
         }
       }
     },
+    "/public/login-google-oauth2": {
+      "post": {
+        "summary": "Google OAuth2 login",
+        "description": "Authenticates a user using Google OAuth2 authorization code. Exchanges the code for user info and returns a JWT token.",
+        "operationId": "loginGoogleOAuth2",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleOAuth2LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid authorization code or email not verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Failed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/note/save": {
       "post": {
         "summary": "Save note",
@@ -281,6 +321,23 @@
             "description": "Password for authentication",
             "format": "password",
             "example": "your-password"
+          }
+        }
+      },
+      "GoogleOAuth2LoginRequest": {
+        "type": "object",
+        "required": ["code", "redirectUri"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Google OAuth2 authorization code obtained from Google login flow",
+            "example": "4/0AY0e-g7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "Redirect URI used in the OAuth2 flow (must match the one configured in Google Console)",
+            "format": "uri",
+            "example": "https://v.binfer.net/login/callback"
           }
         }
       },

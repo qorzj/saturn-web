@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/login-google-oauth2": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Google OAuth2 login
+         * @description Authenticates a user using Google OAuth2 authorization code. Exchanges the code for user info and returns a JWT token.
+         */
+        post: operations["loginGoogleOAuth2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/note/save": {
         parameters: {
             query?: never;
@@ -124,6 +144,19 @@ export interface components {
              * @example your-password
              */
             password: string;
+        };
+        GoogleOAuth2LoginRequest: {
+            /**
+             * @description Google OAuth2 authorization code obtained from Google login flow
+             * @example 4/0AY0e-g7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+             */
+            code: string;
+            /**
+             * Format: uri
+             * @description Redirect URI used in the OAuth2 flow (must match the one configured in Google Console)
+             * @example https://v.binfer.net/login/callback
+             */
+            redirectUri: string;
         };
         LoginResponse: {
             /**
@@ -318,6 +351,39 @@ export interface operations {
                 };
             };
             /** @description Invalid username or password */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Failed"];
+                };
+            };
+        };
+    };
+    loginGoogleOAuth2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoogleOAuth2LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Login successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Invalid authorization code or email not verified */
             400: {
                 headers: {
                     [name: string]: unknown;
