@@ -149,13 +149,15 @@ export default function NotePage() {
   };
 
   const handleDelete = useCallback(async () => {
+    if (!note) return;
+
     if (!confirm('Are you sure you want to delete this note?')) {
       return;
     }
 
     try {
       const { error } = await apiClient.DELETE('/mgr/note/{slug}', {
-        params: { path: { slug } },
+        params: { path: { slug: note.slug } },
       });
 
       if (!error) {
@@ -168,7 +170,7 @@ export default function NotePage() {
       console.error('Failed to delete note:', err);
       alert('Failed to delete note');
     }
-  }, [slug]);
+  }, [note]);
 
   const handleToggleShare = useCallback(async () => {
     if (!note) return;
