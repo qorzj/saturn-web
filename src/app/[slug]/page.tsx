@@ -26,6 +26,7 @@ export default function NotePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isSavingRef = useRef(false);
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
 
   const fetchNote = useCallback(async () => {
     setIsLoading(true);
@@ -200,6 +201,19 @@ export default function NotePage() {
     }
   }, [slug, note]);
 
+  const handleCopyShareUrl = useCallback(() => {
+    if (!note || note.isShared !== 1) return;
+
+    const shareUrl = `${window.location.origin}/share/${slug}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setShowCopiedToast(true);
+      setTimeout(() => setShowCopiedToast(false), 2000);
+    }).catch(err => {
+      console.error('Failed to copy URL:', err);
+      alert('Failed to copy URL to clipboard');
+    });
+  }, [slug, note]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -371,6 +385,16 @@ export default function NotePage() {
                         {note.isShared === 1 ? 'lock_open' : 'lock'}
                       </i>
                     </button>
+                    {note.isShared === 1 && (
+                      <button
+                        onClick={handleCopyShareUrl}
+                        className="text-[#626262] no-underline inline-flex items-center"
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                        title="Copy share link"
+                      >
+                        <i className="material-icons tiny" style={{ fontSize: '18px' }}>share</i>
+                      </button>
+                    )}
                     <button
                       onClick={handleDelete}
                       className="text-[#626262] no-underline inline-flex items-center"
@@ -385,6 +409,39 @@ export default function NotePage() {
             </div>
           </div>
         </footer>
+
+        {/* Toast notification for copied URL */}
+        {showCopiedToast && (
+          <div style={{
+            position: 'fixed',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#323232',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
+            zIndex: 1000,
+            animation: 'fadeIn 0.2s ease-in'
+          }}>
+            Link copied!
+          </div>
+        )}
+
+        <style jsx>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
+        `}</style>
       </div>
     </>
   );
