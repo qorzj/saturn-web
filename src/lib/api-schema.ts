@@ -190,7 +190,7 @@ export interface components {
             /**
              * Format: uri
              * @description Redirect URI used in the OAuth2 flow (must match the one configured in Google Console)
-             * @example https://v.binfer.net/login/callback
+             * @example https://binfer.net/login/callback
              */
             redirectUri: string;
         };
