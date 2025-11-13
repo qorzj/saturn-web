@@ -338,36 +338,33 @@ export default function NotePage() {
         <footer className="page-footer" style={{ backgroundColor: '#E9E9E9' }}>
           <div className="footer-copyright" style={{ padding: '10px 0' }}>
             <div className="container mx-auto px-4 text-[#9e9e9e]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-              <div>
-                <Link href="/how-to-use" className="text-[#626262] no-underline">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Link href="/share/how-to-use" className="text-[#626262] no-underline">
                   How to Use
                 </Link>
                 {!isEditing && note?.contentMd && (
-                  <>
-                    {' '}
-                    <button
-                      onClick={handleEdit}
-                      className="text-[#626262] no-underline inline-flex items-center"
-                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                      title="Edit note"
-                    >
-                      <i className="material-icons tiny" style={{ fontSize: '18px' }}>edit</i>
-                    </button>
-                  </>
+                  <button
+                    onClick={handleEdit}
+                    className="text-[#626262] no-underline inline-flex items-center"
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    title="Edit note"
+                  >
+                    <i className="material-icons tiny" style={{ fontSize: '18px' }}>edit</i>
+                  </button>
                 )}
               </div>
-              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
                 <Link href="/search" className="text-[#626262] no-underline inline-flex items-center">
                   <i className="material-icons tiny" style={{ fontSize: '18px' }}>search</i>
                 </Link>
               </div>
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 {note?.contentMd && (
                   <>
                     <button
                       onClick={handleToggleShare}
                       className="text-[#626262] no-underline inline-flex items-center"
-                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', marginRight: '12px' }}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                       title={note.isShared === 1 ? 'Unshare note (currently shared)' : 'Share note (currently private)'}
                     >
                       <i className="material-icons tiny" style={{ fontSize: '18px' }}>

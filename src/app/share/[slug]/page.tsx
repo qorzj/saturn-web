@@ -21,6 +21,7 @@ export default function SharedNotePage() {
   const [note, setNote] = useState<SharedNote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
 
   const fetchNote = useCallback(async () => {
     setIsLoading(true);
@@ -45,6 +46,17 @@ export default function SharedNotePage() {
   useEffect(() => {
     fetchNote();
   }, [fetchNote]);
+
+  const handleCopyUrl = useCallback(() => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      setShowCopiedToast(true);
+      setTimeout(() => setShowCopiedToast(false), 2000);
+    }).catch(err => {
+      console.error('Failed to copy URL:', err);
+      alert('Failed to copy URL to clipboard');
+    });
+  }, []);
 
   if (isLoading) {
     return (
@@ -93,20 +105,62 @@ export default function SharedNotePage() {
         <footer className="page-footer" style={{ backgroundColor: '#E9E9E9' }}>
           <div className="footer-copyright" style={{ padding: '10px 0' }}>
             <div className="container mx-auto px-4 text-[#9e9e9e]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-              <div>
-                <Link href="/how-to-use" className="text-[#626262] no-underline">
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Link href="/share/how-to-use" className="text-[#626262] no-underline">
                   How to Use
                 </Link>
               </div>
-              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
                 {/* Empty center - no search icon for public pages */}
               </div>
-              <div>
-                {/* Empty right - no action icons for public pages */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {note?.contentMd && (
+                  <button
+                    onClick={handleCopyUrl}
+                    className="text-[#626262] no-underline inline-flex items-center"
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                    title="Copy public URL"
+                  >
+                    <i className="material-icons tiny" style={{ fontSize: '18px' }}>share</i>
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </footer>
+
+        {/* Toast notification for copied URL */}
+        {showCopiedToast && (
+          <div style={{
+            position: 'fixed',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#323232',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
+            zIndex: 1000,
+            animation: 'fadeIn 0.2s ease-in'
+          }}>
+            Link copied!
+          </div>
+        )}
+
+        <style jsx>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
+        `}</style>
       </div>
     </>
   );
