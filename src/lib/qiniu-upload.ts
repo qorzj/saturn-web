@@ -47,7 +47,8 @@ export async function uploadImageToQiniu(file: File): Promise<string> {
   formData.append('token', tokenData.uptoken);
   formData.append('key', key);
 
-  const uploadResponse = await fetch('https://upload.qiniup.com', {
+  // Use the correct regional upload domain for lessweb bucket (华南 z2 region)
+  const uploadResponse = await fetch('https://up-z2.qiniup.com', {
     method: 'POST',
     body: formData,
   });
