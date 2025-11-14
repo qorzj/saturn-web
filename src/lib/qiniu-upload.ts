@@ -1,5 +1,8 @@
 import { apiClient } from './api-client';
 
+// Cache for uploaded images (file hash -> image URL)
+const uploadedImagesCache = new Map<string, string>();
+
 /**
  * Generate a unique file key for Qiniu upload
  */
@@ -8,6 +11,26 @@ function generateFileKey(file: File): string {
   const random = Math.random().toString(36).substring(2, 8);
   const ext = file.name.split('.').pop() || 'jpg';
   return `${timestamp}-${random}.${ext}`;
+}
+
+/**
+ * Calculate a simple hash for a file
+ * Uses file size, type, and last modified date to create a unique identifier
+ */
+async function calculateFileHash(file: File): Promise<string> {
+  // For better performance, we use file metadata instead of reading the entire file
+  // This is sufficient for detecting duplicate pastes in the same session
+  const metadata = `${file.size}-${file.type}-${file.lastModified}`;
+
+  // If we want a more robust hash, we can read a sample of the file
+  // For now, metadata-based hash is fast and works well for paste operations
+  const encoder = new TextEncoder();
+  const data = encoder.encode(metadata);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  return hashHex;
 }
 
 /**
@@ -25,6 +48,14 @@ export async function uploadImageToQiniu(file: File): Promise<string> {
   const maxSize = 5 * 1024 * 1024; // 5MB
   if (file.size > maxSize) {
     throw new Error('Image size must be less than 5MB');
+  }
+
+  // Check if this image has already been uploaded
+  const fileHash = await calculateFileHash(file);
+  const cachedUrl = uploadedImagesCache.get(fileHash);
+  if (cachedUrl) {
+    console.log('Image already uploaded, using cached URL:', cachedUrl);
+    return cachedUrl;
   }
 
   // Generate unique key (without prefix)
@@ -66,6 +97,9 @@ export async function uploadImageToQiniu(file: File): Promise<string> {
   // Construct public URL
   // uploadResult.key already contains the full path (e.g., "ucimg/1763095141859-67h2g1.png")
   const publicUrl = `https://img.binfer.net/${uploadResult.key}`;
+
+  // Cache the uploaded image URL
+  uploadedImagesCache.set(fileHash, publicUrl);
 
   return publicUrl;
 }
