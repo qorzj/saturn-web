@@ -27,13 +27,17 @@ export async function uploadImageToQiniu(file: File): Promise<string> {
     throw new Error('Image size must be less than 5MB');
   }
 
-  // Generate unique key
-  const key = generateFileKey(file);
+  // Generate unique key (without prefix)
+  const baseKey = generateFileKey(file);
 
-  // Get upload token from backend
+  // Full key with path_prefix for upload
+  const pathPrefix = 'ucimg';
+  const fullKey = `${pathPrefix}/${baseKey}`;
+
+  // Get upload token from backend (pass the base key, backend will add prefix)
   const { data: tokenData, error: tokenError } = await apiClient.GET('/api/qiniu/uptoken', {
     params: {
-      query: { key },
+      query: { key: baseKey },
     },
   });
 
@@ -41,11 +45,11 @@ export async function uploadImageToQiniu(file: File): Promise<string> {
     throw new Error('Failed to get upload token');
   }
 
-  // Upload to Qiniu
+  // Upload to Qiniu with full key (including path_prefix)
   const formData = new FormData();
   formData.append('file', file);
   formData.append('token', tokenData.uptoken);
-  formData.append('key', key);
+  formData.append('key', fullKey);
 
   // Use the correct regional upload domain for lessweb bucket (华南 z2 region)
   const uploadResponse = await fetch('https://up-z2.qiniup.com', {
