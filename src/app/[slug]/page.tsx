@@ -221,6 +221,12 @@ export default function NotePage() {
 
   // Handle paste event for image upload
   const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    // Prevent uploading new images while another upload is in progress
+    if (isUploading) {
+      e.preventDefault();
+      return;
+    }
+
     const items = e.clipboardData?.items;
     if (!items) return;
 
