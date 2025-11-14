@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import MarkdownRenderer from '@/components/markdown/MarkdownRenderer';
+import { uploadImageToQiniu } from '@/lib/qiniu-upload';
 
 interface Note {
   slug: string;
@@ -27,6 +28,8 @@ export default function NotePage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isSavingRef = useRef(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchNote = useCallback(async () => {
     setIsLoading(true);
@@ -216,6 +219,56 @@ export default function NotePage() {
     });
   }, [slug, note]);
 
+  // Handle paste event for image upload
+  const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    // Find image in clipboard
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        setIsUploading(true);
+
+        try {
+          // Upload image to Qiniu
+          const imageUrl = await uploadImageToQiniu(file);
+
+          // Insert markdown image at cursor position
+          const textarea = textareaRef.current;
+          if (textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const markdownImage = `![img](${imageUrl})`;
+            const newContent = contentMd.substring(0, start) + markdownImage + contentMd.substring(end);
+
+            setContentMd(newContent);
+            setHasUnsavedChanges(true);
+
+            // Set cursor position after the inserted image
+            setTimeout(() => {
+              const newCursorPos = start + markdownImage.length;
+              textarea.setSelectionRange(newCursorPos, newCursorPos);
+              textarea.focus();
+            }, 0);
+          }
+        } catch (err) {
+          console.error('Failed to upload image:', err);
+          alert(err instanceof Error ? err.message : 'Failed to upload image');
+        } finally {
+          setIsUploading(false);
+        }
+
+        break;
+      }
+    }
+  }, [contentMd]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -243,6 +296,7 @@ export default function NotePage() {
                     <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                       <input type="hidden" name="slug" value={slug} />
                       <textarea
+                        ref={textareaRef}
                         name="content_md"
                         id="content-md"
                         className="materialize-textarea"
@@ -260,6 +314,7 @@ export default function NotePage() {
                           boxSizing: 'border-box'
                         }}
                         value={contentMd}
+                        onPaste={handlePaste}
                         onChange={(e) => {
                           const target = e.target;
                           const cursorPosition = target.selectionStart;
@@ -318,8 +373,8 @@ export default function NotePage() {
                         <input
                           className="btn-primary"
                           type="submit"
-                          value={isSaving ? 'Saving...' : 'Save markdown'}
-                          disabled={isSaving}
+                          value={isSaving ? 'Saving...' : isUploading ? 'Uploading image...' : 'Save markdown'}
+                          disabled={isSaving || isUploading}
                           style={{
                             lineHeight: '1.5715',
                             position: 'relative',

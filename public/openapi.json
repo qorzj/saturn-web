@@ -219,6 +219,46 @@
         }
       }
     },
+    "/api/qiniu/uptoken": {
+      "get": {
+        "summary": "Get Qiniu upload token",
+        "description": "Returns a Qiniu Cloud upload token for client-side file upload. The token is restricted to image files only (MIME type: image/*) with a maximum size of 5MB. Token is valid for 1 hour by default. Requires authentication.",
+        "operationId": "getQiniuUploadToken",
+        "tags": ["File Upload"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "description": "Upload file key (path). Will be prefixed with the configured path_prefix.",
+            "schema": {
+              "type": "string",
+              "example": "notes/my-image.jpg"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upload token generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QiniuUploadTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication token"
+          }
+        }
+      }
+    },
     "/mgr/note": {
       "get": {
         "summary": "List all notes",
@@ -621,6 +661,17 @@
           }
         }
       },
+      "QiniuUploadTokenResponse": {
+        "type": "object",
+        "required": ["uptoken"],
+        "properties": {
+          "uptoken": {
+            "type": "string",
+            "description": "Qiniu upload token. This token is valid for 1 hour and restricted to image files (MIME type: image/*) with max size of 5MB.",
+            "example": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkw:dGhpc2lzYXRlc3R0b2tlbg==:eyJzY29wZSI6Imxlc3N3ZWI6YmluZmVyL25vdGVzL215LWltYWdlLmpwZyIsImRlYWRsaW5lIjoxNjA1MjY0MDAwLCJmc2l6ZUxpbWl0Ijo1MjQyODgwLCJtaW1lTGltaXQiOiJpbWFnZS8qIn0="
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -645,6 +696,10 @@
     {
       "name": "Note Management",
       "description": "Management API for note administration"
+    },
+    {
+      "name": "File Upload",
+      "description": "File upload token generation and management"
     }
   ]
 }

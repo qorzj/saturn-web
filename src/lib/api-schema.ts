@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/qiniu/uptoken": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Qiniu upload token
+         * @description Returns a Qiniu Cloud upload token for client-side file upload. The token is restricted to image files only (MIME type: image/*) with a maximum size of 5MB. Token is valid for 1 hour by default. Requires authentication.
+         */
+        get: operations["getQiniuUploadToken"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/mgr/note": {
         parameters: {
             query?: never;
@@ -385,6 +405,13 @@ export interface components {
              */
             updateTime: string;
         };
+        QiniuUploadTokenResponse: {
+            /**
+             * @description Qiniu upload token. This token is valid for 1 hour and restricted to image files (MIME type: image/*) with max size of 5MB.
+             * @example YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkw:dGhpc2lzYXRlc3R0b2tlbg==:eyJzY29wZSI6Imxlc3N3ZWI6YmluZmVyL25vdGVzL215LWltYWdlLmpwZyIsImRlYWRsaW5lIjoxNjA1MjY0MDAwLCJmc2l6ZUxpbWl0Ijo1MjQyODgwLCJtaW1lTGltaXQiOiJpbWFnZS8qIn0=
+             */
+            uptoken: string;
+        };
         Error: {
             /**
              * @description Error message
@@ -546,6 +573,36 @@ export interface operations {
             };
             /** @description Note not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getQiniuUploadToken: {
+        parameters: {
+            query: {
+                /** @description Upload file key (path). Will be prefixed with the configured path_prefix. */
+                key: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload token generated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QiniuUploadTokenResponse"];
+                };
+            };
+            /** @description Unauthorized - Invalid or missing authentication token */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
