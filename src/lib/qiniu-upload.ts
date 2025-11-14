@@ -14,19 +14,17 @@ function generateFileKey(file: File): string {
 }
 
 /**
- * Calculate a simple hash for a file
- * Uses file size, type, and last modified date to create a unique identifier
+ * Calculate a hash for a file based on its content
+ * Reads the first 64KB of the file to generate a unique hash
  */
 async function calculateFileHash(file: File): Promise<string> {
-  // For better performance, we use file metadata instead of reading the entire file
-  // This is sufficient for detecting duplicate pastes in the same session
-  const metadata = `${file.size}-${file.type}-${file.lastModified}`;
+  // Read a sample of the file (first 64KB or entire file if smaller)
+  const sampleSize = Math.min(64 * 1024, file.size);
+  const fileSlice = file.slice(0, sampleSize);
+  const arrayBuffer = await fileSlice.arrayBuffer();
 
-  // If we want a more robust hash, we can read a sample of the file
-  // For now, metadata-based hash is fast and works well for paste operations
-  const encoder = new TextEncoder();
-  const data = encoder.encode(metadata);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  // Calculate SHA-256 hash of the sample
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
