@@ -60,7 +60,7 @@ export async function uploadImageToQiniu(file: File): Promise<string> {
 
   // Construct public URL
   // Format: https://img.binfer.net/{path_prefix}/{key}
-  const publicUrl = `https://img.binfer.net/binfer/${uploadResult.key}`;
+  const publicUrl = `https://img.binfer.net/ucimg/${uploadResult.key}`;
 
   return publicUrl;
 }
