@@ -8,6 +8,7 @@ import MarkdownRenderer from '@/components/markdown/MarkdownRenderer';
 
 interface SearchNote {
   slug: string;
+  innerSlug?: string | null;
   contentMd: string;
   title: string;
   similarity: number;
@@ -177,7 +178,7 @@ function SearchContent() {
                               {/* Title/Link */}
                               <h3 className="mb-2">
                                 <Link
-                                  href={`/${note.slug}`}
+                                  href={`/${note.innerSlug || note.slug}`}
                                   className="text-[#1a0dab] text-xl hover:underline"
                                   style={{ fontWeight: '400' }}
                                 >
@@ -188,10 +189,10 @@ function SearchContent() {
                               {/* URL */}
                               <div className="mb-2">
                                 <Link
-                                  href={`/${note.slug}`}
+                                  href={`/${note.innerSlug || note.slug}`}
                                   className="text-[#006621] text-sm no-underline"
                                 >
-                                  {typeof window !== 'undefined' ? window.location.origin : ''}/{note.slug}
+                                  {typeof window !== 'undefined' ? window.location.origin : ''}/{note.innerSlug || note.slug}
                                 </Link>
                               </div>
 

@@ -629,6 +629,12 @@
             "description": "Note identifier",
             "example": "python-async-guide"
           },
+          "innerSlug": {
+            "type": "string",
+            "description": "Internal slug for user-specific note identification",
+            "nullable": true,
+            "example": "my-note"
+          },
           "title": {
             "type": "string",
             "description": "Note title",

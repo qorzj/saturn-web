@@ -375,6 +375,11 @@ export interface components {
              */
             slug: string;
             /**
+             * @description Internal slug for user-specific note identification
+             * @example my-note
+             */
+            innerSlug?: string | null;
+            /**
              * @description Note title
              * @example Python Async Programming Guide
              */
