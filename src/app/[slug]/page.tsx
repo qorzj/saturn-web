@@ -209,7 +209,7 @@ export default function NotePage() {
   const handleCopyShareUrl = useCallback(() => {
     if (!note || note.isShared !== 1) return;
 
-    const shareUrl = `${window.location.origin}/share/${slug}`;
+    const shareUrl = `${window.location.origin}/share/${note.slug}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setShowCopiedToast(true);
       setTimeout(() => setShowCopiedToast(false), 2000);
@@ -217,7 +217,7 @@ export default function NotePage() {
       console.error('Failed to copy URL:', err);
       alert('Failed to copy URL to clipboard');
     });
-  }, [slug, note]);
+  }, [note]);
 
   // Handle paste event for image upload
   const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
