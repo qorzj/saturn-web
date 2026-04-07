@@ -12,10 +12,18 @@ import { useEffect, useState } from 'react';
 interface MarkdownRendererProps {
   content: string;
   allowRawHtml?: boolean;
+  onTaskToggle?: (taskIndex: number, checked: boolean) => void;
+  isTaskTogglePending?: boolean;
 }
 
-export default function MarkdownRenderer({ content, allowRawHtml = true }: MarkdownRendererProps) {
+export default function MarkdownRenderer({
+  content,
+  allowRawHtml = true,
+  onTaskToggle,
+  isTaskTogglePending = false,
+}: MarkdownRendererProps) {
   const containsMath = content.includes('$$') || content.includes('$');
+  let renderedTaskIndex = 0;
 
   return (
     <div className="markdown-body">
@@ -42,6 +50,31 @@ export default function MarkdownRenderer({ content, allowRawHtml = true }: Markd
               <code className={className} {...props}>
                 {children}
               </code>
+            );
+          },
+          input(inputProps) {
+            const { checked, disabled, type, ...props } = inputProps;
+            void disabled;
+
+            if (type !== 'checkbox') {
+              return <input type={type} {...props} />;
+            }
+
+            const taskIndex = renderedTaskIndex;
+            renderedTaskIndex += 1;
+
+            if (!onTaskToggle) {
+              return <input type="checkbox" {...props} checked={Boolean(checked)} disabled readOnly />;
+            }
+
+            return (
+              <input
+                type="checkbox"
+                {...props}
+                checked={Boolean(checked)}
+                disabled={isTaskTogglePending}
+                onChange={(event) => onTaskToggle(taskIndex, event.currentTarget.checked)}
+              />
             );
           },
         }}

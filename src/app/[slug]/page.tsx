@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import MarkdownRenderer from '@/components/markdown/MarkdownRenderer';
+import { updateMarkdownTaskState } from '@/lib/markdown-task-list';
 import { uploadImageToQiniu } from '@/lib/qiniu-upload';
 
 interface Note {
@@ -92,34 +93,43 @@ export default function NotePage() {
     }
   }, [isEditing]); // Only depend on isEditing, not contentMd
 
-  const handleSave = useCallback(async () => {
+  const saveNoteContent = useCallback(async (nextContentMd: string, nextIsShared?: 0 | 1) => {
     setIsSaving(true);
     isSavingRef.current = true;
+
     try {
       const { error } = await apiClient.POST('/api/note/save', {
         body: {
           slug,
-          contentMd: contentMd.trim(),
-          isShared: (note?.isShared ?? 0) as 0 | 1, // Keep existing share status or default to private
+          contentMd: nextContentMd,
+          isShared: nextIsShared ?? ((note?.isShared ?? 0) as 0 | 1),
         },
       });
 
       if (!error) {
         setHasUnsavedChanges(false);
-        // Refresh the page to show rendered content
-        window.location.reload();
+        return true;
       } else {
-        alert('Failed to save note');
-        isSavingRef.current = false;
+        return false;
       }
     } catch (err) {
       console.error('Failed to save note:', err);
-      alert('Failed to save note');
-      isSavingRef.current = false;
+      return false;
     } finally {
       setIsSaving(false);
+      isSavingRef.current = false;
     }
-  }, [slug, contentMd, note?.isShared]);
+  }, [slug, note?.isShared]);
+
+  const handleSave = useCallback(async () => {
+    const saved = await saveNoteContent(contentMd.trim());
+
+    if (saved) {
+      window.location.reload();
+    } else {
+      alert('Failed to save note');
+    }
+  }, [contentMd, saveNoteContent]);
 
   // Command+Enter to save
   useEffect(() => {
@@ -175,6 +185,34 @@ export default function NotePage() {
     }
   }, [note]);
 
+  const handleTaskToggle = useCallback(async (taskIndex: number, checked: boolean) => {
+    if (!note || isSaving) return;
+
+    const previousContent = note.contentMd;
+    const nextContent = updateMarkdownTaskState(previousContent, taskIndex, checked);
+
+    if (nextContent === previousContent) {
+      return;
+    }
+
+    setNote((currentNote) => {
+      if (!currentNote) return currentNote;
+      return { ...currentNote, contentMd: nextContent };
+    });
+    setContentMd(nextContent);
+
+    const saved = await saveNoteContent(nextContent);
+
+    if (!saved) {
+      setNote((currentNote) => {
+        if (!currentNote) return currentNote;
+        return { ...currentNote, contentMd: previousContent };
+      });
+      setContentMd(previousContent);
+      alert('Failed to update task status');
+    }
+  }, [isSaving, note, saveNoteContent]);
+
   const handleToggleShare = useCallback(async () => {
     if (!note) return;
 
@@ -186,15 +224,9 @@ export default function NotePage() {
     }
 
     try {
-      const { error } = await apiClient.POST('/api/note/save', {
-        body: {
-          slug,
-          contentMd: note.contentMd,
-          isShared: newIsShared as 0 | 1,
-        },
-      });
+      const saved = await saveNoteContent(note.contentMd, newIsShared as 0 | 1);
 
-      if (!error) {
+      if (saved) {
         // Reload to show updated share status
         window.location.reload();
       } else {
@@ -204,7 +236,7 @@ export default function NotePage() {
       console.error(`Failed to ${action} note:`, err);
       alert(`Failed to ${action} note`);
     }
-  }, [slug, note]);
+  }, [note, saveNoteContent]);
 
   const handleCopyShareUrl = useCallback(() => {
     if (!note || note.isShared !== 1) return;
@@ -273,7 +305,7 @@ export default function NotePage() {
         break;
       }
     }
-  }, [contentMd]);
+  }, [contentMd, isUploading]);
 
   if (isLoading) {
     return (
@@ -295,7 +327,11 @@ export default function NotePage() {
               <div className="w-full">
                 {!isEditing && note?.contentMd ? (
                   <div id="content-html">
-                    <MarkdownRenderer content={note.contentMd} />
+                    <MarkdownRenderer
+                      content={note.contentMd}
+                      onTaskToggle={handleTaskToggle}
+                      isTaskTogglePending={isSaving}
+                    />
                   </div>
                 ) : (
                   <div id="content-md-edit">

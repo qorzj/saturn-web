@@ -129,3 +129,14 @@ Private
 
 - Author: qorzj
 - Email: goodhorsezxj@gmail.com
+
+### 页面 (Pages)
+
+| 路由              | 名称                            | 功能描述                              |
+| ----------------- | ------------------------------- | ------------------------------------- |
+| `/`               | **Home (首页)**                 | 生成随机 7 位 slug 并重定向到笔记页面 |
+| `/[slug]`         | **Note Page (笔记页面)**        | 查看/编辑笔记，支持 Markdown 渲染     |
+| `/search`         | **Search Page (搜索页面)**      | 基于向量相似度 (RAG) 搜索笔记         |
+| `/share/[slug]`   | **Shared Note Page (分享页面)** | 公开查看已分享的笔记                  |
+| `/login`          | **Login Page**                  | 用户登录                              |
+| `/login/callback` | **Login Callback**              | OAuth 登录回调                        |

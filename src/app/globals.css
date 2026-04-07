@@ -243,6 +243,15 @@ a.no-underline:hover {
   word-wrap: break-all;
 }
 
+.markdown-body input[type=checkbox] {
+  cursor: pointer;
+  margin-right: .5em;
+}
+
+.markdown-body input[type=checkbox]:disabled {
+  cursor: not-allowed;
+}
+
 .markdown-body li>p {
   margin-top: 16px;
 }
