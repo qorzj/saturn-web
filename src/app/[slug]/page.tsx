@@ -1,7 +1,7 @@
 'use client';
 
 import Editor, { type OnMount } from '@monaco-editor/react';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, type ClipboardEvent as ReactClipboardEvent } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import type { editor as MonacoEditor } from 'monaco-editor';
@@ -369,9 +369,9 @@ export default function NotePage() {
     });
 
     pasteCleanupRef.current?.();
-    domNode.addEventListener('paste', handleEditorPaste);
+    domNode.addEventListener('paste', handleEditorPaste, true);
     pasteCleanupRef.current = () => {
-      domNode.removeEventListener('paste', handleEditorPaste);
+      domNode.removeEventListener('paste', handleEditorPaste, true);
     };
   }, [handleEditorPaste, updateEditorHeight]);
 
@@ -412,6 +412,9 @@ export default function NotePage() {
                     <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                       <input type="hidden" name="slug" value={slug} />
                       <div
+                        onPasteCapture={(event: ReactClipboardEvent<HTMLDivElement>) => {
+                          void handleEditorPaste(event.nativeEvent);
+                        }}
                         style={{
                           minHeight: '200px',
                           width: '100%',
