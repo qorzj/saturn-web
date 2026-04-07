@@ -37,6 +37,7 @@ export default function NotePage() {
   const [isUploading, setIsUploading] = useState(false);
   const isUploadingRef = useRef(false);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+  const handleSaveRef = useRef<() => Promise<void>>(async () => {});
   const pasteCleanupRef = useRef<(() => void) | null>(null);
   const contentSizeCleanupRef = useRef<{ dispose: () => void } | null>(null);
 
@@ -160,6 +161,10 @@ export default function NotePage() {
       alert('Failed to save note');
     }
   }, [contentMd, saveNoteContent]);
+
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
 
   // Command+Enter to save
   useEffect(() => {
@@ -344,10 +349,14 @@ export default function NotePage() {
     }
   }, []);
 
-  const handleEditorDidMount = useCallback<OnMount>((editor) => {
+  const handleEditorDidMount = useCallback<OnMount>((editor, monaco) => {
     editorRef.current = editor;
     editor.focus();
     updateEditorHeight();
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      void handleSaveRef.current();
+    });
 
     const domNode = editor.getDomNode();
     if (!domNode) {
@@ -422,7 +431,7 @@ export default function NotePage() {
                           options={{
                             automaticLayout: true,
                             fontSize: 14,
-                            fontFamily: 'Menlo, Monaco, Consolas, monospace',
+                            fontFamily: 'monospace',
                             lineHeight: 21,
                             lineNumbers: 'off',
                             lineDecorationsWidth: 0,
@@ -444,6 +453,13 @@ export default function NotePage() {
                             quickSuggestions: false,
                             suggestOnTriggerCharacters: false,
                             folding: false,
+                            padding: {
+                              top: 10,
+                              bottom: 10,
+                            },
+                            cursorSurroundingLines: 0,
+                            cursorStyle: 'line',
+                            smoothScrolling: true,
                             guides: {
                               indentation: false,
                             },
@@ -453,6 +469,8 @@ export default function NotePage() {
                               vertical: 'hidden',
                               horizontal: 'hidden',
                               handleMouseWheel: false,
+                              verticalScrollbarSize: 0,
+                              horizontalScrollbarSize: 0,
                             },
                           }}
                         />
