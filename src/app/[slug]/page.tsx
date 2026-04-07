@@ -434,7 +434,7 @@ export default function NotePage() {
                             fontFamily: 'monospace',
                             lineHeight: 21,
                             lineNumbers: 'off',
-                            lineDecorationsWidth: 0,
+                            lineDecorationsWidth: 10,
                             lineNumbersMinChars: 0,
                             glyphMargin: false,
                             minimap: { enabled: false },
