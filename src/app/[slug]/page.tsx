@@ -1,8 +1,10 @@
 'use client';
 
+import Editor, { type OnMount } from '@monaco-editor/react';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import type { editor as MonacoEditor } from 'monaco-editor';
 import { apiClient } from '@/lib/api-client';
 import MarkdownRenderer from '@/components/markdown/MarkdownRenderer';
 import { updateMarkdownTaskState } from '@/lib/markdown-task-list';
@@ -30,7 +32,9 @@ export default function NotePage() {
   const isSavingRef = useRef(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isUploadingRef = useRef(false);
+  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+  const pasteCleanupRef = useRef<(() => void) | null>(null);
 
   const fetchNote = useCallback(async () => {
     setIsLoading(true);
@@ -65,6 +69,10 @@ export default function NotePage() {
     fetchNote();
   }, [fetchNote]);
 
+  useEffect(() => {
+    isUploadingRef.current = isUploading;
+  }, [isUploading]);
+
   // Warn before leaving with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -79,19 +87,17 @@ export default function NotePage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Auto-resize textarea only when entering edit mode (not on every content change)
   useEffect(() => {
-    if (isEditing) {
-      const textarea = document.getElementById('content-md') as HTMLTextAreaElement;
-      if (textarea) {
-        // Use setTimeout to ensure the textarea is rendered with current content
-        setTimeout(() => {
-          textarea.style.height = 'auto';
-          textarea.style.height = Math.max(200, textarea.scrollHeight) + 'px';
-        }, 0);
-      }
+    if (isEditing && editorRef.current) {
+      editorRef.current.focus();
     }
-  }, [isEditing]); // Only depend on isEditing, not contentMd
+  }, [isEditing]);
+
+  useEffect(() => {
+    return () => {
+      pasteCleanupRef.current?.();
+    };
+  }, []);
 
   const saveNoteContent = useCallback(async (nextContentMd: string, nextIsShared?: 0 | 1) => {
     setIsSaving(true);
@@ -156,10 +162,10 @@ export default function NotePage() {
     setHasUnsavedChanges(false);
   };
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContentMd(e.target.value);
+  const handleContentChange = useCallback((nextContentMd: string) => {
+    setContentMd(nextContentMd);
     setHasUnsavedChanges(true);
-  };
+  }, []);
 
   const handleDelete = useCallback(async () => {
     if (!note) return;
@@ -251,61 +257,79 @@ export default function NotePage() {
     });
   }, [note]);
 
-  // Handle paste event for image upload
-  const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    // Prevent uploading new images while another upload is in progress
-    if (isUploading) {
-      e.preventDefault();
+  const handleEditorPaste = useCallback(async (event: ClipboardEvent) => {
+    if (isUploadingRef.current) {
+      event.preventDefault();
       return;
     }
 
-    const items = e.clipboardData?.items;
+    const items = event.clipboardData?.items;
     if (!items) return;
 
-    // Find image in clipboard
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
+    for (const item of Array.from(items)) {
+      if (!item.type.startsWith('image/')) {
+        continue;
+      }
 
-        const file = item.getAsFile();
-        if (!file) continue;
+      event.preventDefault();
 
-        setIsUploading(true);
+      const file = item.getAsFile();
+      if (!file) {
+        return;
+      }
 
-        try {
-          // Upload image to Qiniu
-          const imageUrl = await uploadImageToQiniu(file);
+      setIsUploading(true);
 
-          // Insert markdown image at cursor position
-          const textarea = textareaRef.current;
-          if (textarea) {
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const markdownImage = `![img](${imageUrl})`;
-            const newContent = contentMd.substring(0, start) + markdownImage + contentMd.substring(end);
+      try {
+        const imageUrl = await uploadImageToQiniu(file);
+        const editor = editorRef.current;
+        const model = editor?.getModel();
+        const selection = editor?.getSelection();
 
-            setContentMd(newContent);
-            setHasUnsavedChanges(true);
-
-            // Set cursor position after the inserted image
-            setTimeout(() => {
-              const newCursorPos = start + markdownImage.length;
-              textarea.setSelectionRange(newCursorPos, newCursorPos);
-              textarea.focus();
-            }, 0);
-          }
-        } catch (err) {
-          console.error('Failed to upload image:', err);
-          alert(err instanceof Error ? err.message : 'Failed to upload image');
-        } finally {
-          setIsUploading(false);
+        if (!editor || !model || !selection) {
+          return;
         }
 
-        break;
+        const markdownImage = `![img](${imageUrl})`;
+        const startOffset = model.getOffsetAt(selection.getStartPosition());
+
+        editor.executeEdits('image-upload', [
+          {
+            range: selection,
+            text: markdownImage,
+            forceMoveMarkers: true,
+          },
+        ]);
+
+        const nextPosition = model.getPositionAt(startOffset + markdownImage.length);
+        editor.setPosition(nextPosition);
+        editor.focus();
+      } catch (err) {
+        console.error('Failed to upload image:', err);
+        alert(err instanceof Error ? err.message : 'Failed to upload image');
+      } finally {
+        setIsUploading(false);
       }
+
+      return;
     }
-  }, [contentMd, isUploading]);
+  }, []);
+
+  const handleEditorDidMount = useCallback<OnMount>((editor) => {
+    editorRef.current = editor;
+    editor.focus();
+
+    const domNode = editor.getDomNode();
+    if (!domNode) {
+      return;
+    }
+
+    pasteCleanupRef.current?.();
+    domNode.addEventListener('paste', handleEditorPaste);
+    pasteCleanupRef.current = () => {
+      domNode.removeEventListener('paste', handleEditorPaste);
+    };
+  }, [handleEditorPaste]);
 
   if (isLoading) {
     return (
@@ -337,49 +361,48 @@ export default function NotePage() {
                   <div id="content-md-edit">
                     <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                       <input type="hidden" name="slug" value={slug} />
-                      <textarea
-                        ref={textareaRef}
-                        name="content_md"
-                        id="content-md"
-                        className="materialize-textarea"
+                      <div
                         style={{
-                          padding: '10px',
                           minHeight: '200px',
                           width: '100%',
                           border: '1px solid #9e9e9e',
                           borderRadius: '0',
-                          fontSize: '14px',
-                          lineHeight: '1.5',
-                          fontFamily: 'monospace',
-                          resize: 'vertical',
                           overflow: 'hidden',
-                          boxSizing: 'border-box'
+                          boxSizing: 'border-box',
                         }}
-                        value={contentMd}
-                        onPaste={handlePaste}
-                        onChange={(e) => {
-                          const target = e.target;
-                          const cursorPosition = target.selectionStart;
-
-                          handleContentChange(e);
-
-                          // Auto-resize textarea while preserving cursor position
-                          requestAnimationFrame(() => {
-                            const currentHeight = target.scrollHeight;
-                            const newHeight = Math.max(200, currentHeight);
-
-                            // Only update height if it actually needs to change
-                            if (target.style.height !== `${newHeight}px`) {
-                              target.style.height = 'auto';
-                              target.style.height = `${newHeight}px`;
-
-                              // Restore cursor position
-                              target.setSelectionRange(cursorPosition, cursorPosition);
-                            }
-                          });
-                        }}
-                        placeholder="Enter markdown content..."
-                      />
+                      >
+                        <Editor
+                          height="60vh"
+                          defaultLanguage="plaintext"
+                          value={contentMd}
+                          onMount={handleEditorDidMount}
+                          onChange={(value) => handleContentChange(value ?? '')}
+                          loading="Loading editor..."
+                          options={{
+                            automaticLayout: true,
+                            fontSize: 14,
+                            fontFamily: 'Menlo, Monaco, Consolas, monospace',
+                            lineHeight: 21,
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false,
+                            tabFocusMode: false,
+                            tabSize: 2,
+                            insertSpaces: true,
+                            wordWrap: 'on',
+                            wrappingIndent: 'same',
+                            quickSuggestions: false,
+                            suggestOnTriggerCharacters: false,
+                            folding: false,
+                            guides: {
+                              indentation: false,
+                            },
+                            overviewRulerLanes: 0,
+                            scrollbar: {
+                              alwaysConsumeMouseWheel: false,
+                            },
+                          }}
+                        />
+                      </div>
                       <div style={{ marginTop: '16px' }}>
                         {note?.contentMd && (
                           <>
