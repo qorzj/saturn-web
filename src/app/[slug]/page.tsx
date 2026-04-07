@@ -29,12 +29,16 @@ export default function NotePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [editorHeight, setEditorHeight] = useState(200);
   const isSavingRef = useRef(false);
+  const hasUnsavedChangesRef = useRef(false);
+  const skipBeforeUnloadRef = useRef(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const isUploadingRef = useRef(false);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const pasteCleanupRef = useRef<(() => void) | null>(null);
+  const contentSizeCleanupRef = useRef<{ dispose: () => void } | null>(null);
 
   const fetchNote = useCallback(async () => {
     setIsLoading(true);
@@ -73,11 +77,18 @@ export default function NotePage() {
     isUploadingRef.current = isUploading;
   }, [isUploading]);
 
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
+
   // Warn before leaving with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Don't show warning if we're saving
-      if (hasUnsavedChanges && !isSavingRef.current) {
+      if (skipBeforeUnloadRef.current) {
+        return;
+      }
+
+      if (hasUnsavedChangesRef.current && !isSavingRef.current) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -85,7 +96,7 @@ export default function NotePage() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  }, []);
 
   useEffect(() => {
     if (isEditing && editorRef.current) {
@@ -96,7 +107,18 @@ export default function NotePage() {
   useEffect(() => {
     return () => {
       pasteCleanupRef.current?.();
+      contentSizeCleanupRef.current?.dispose();
     };
+  }, []);
+
+  const updateEditorHeight = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const nextHeight = Math.max(200, editor.getContentHeight());
+    setEditorHeight((currentHeight) => (
+      Math.abs(currentHeight - nextHeight) < 1 ? currentHeight : nextHeight
+    ));
   }, []);
 
   const saveNoteContent = useCallback(async (nextContentMd: string, nextIsShared?: 0 | 1) => {
@@ -114,6 +136,7 @@ export default function NotePage() {
 
       if (!error) {
         setHasUnsavedChanges(false);
+        hasUnsavedChangesRef.current = false;
         return true;
       } else {
         return false;
@@ -131,6 +154,7 @@ export default function NotePage() {
     const saved = await saveNoteContent(contentMd.trim());
 
     if (saved) {
+      skipBeforeUnloadRef.current = true;
       window.location.reload();
     } else {
       alert('Failed to save note');
@@ -160,11 +184,14 @@ export default function NotePage() {
     setContentMd(note?.contentMd || '');
     setIsEditing(false);
     setHasUnsavedChanges(false);
+    hasUnsavedChangesRef.current = false;
   };
 
   const handleContentChange = useCallback((nextContentMd: string) => {
+    skipBeforeUnloadRef.current = false;
     setContentMd(nextContentMd);
     setHasUnsavedChanges(true);
+    hasUnsavedChangesRef.current = true;
   }, []);
 
   const handleDelete = useCallback(async () => {
@@ -181,6 +208,7 @@ export default function NotePage() {
 
       if (!error) {
         // Reload the page with the same slug (will create a new empty note)
+        skipBeforeUnloadRef.current = true;
         window.location.reload();
       } else {
         alert('Failed to delete note');
@@ -234,6 +262,7 @@ export default function NotePage() {
 
       if (saved) {
         // Reload to show updated share status
+        skipBeforeUnloadRef.current = true;
         window.location.reload();
       } else {
         alert(`Failed to ${action} note`);
@@ -318,18 +347,30 @@ export default function NotePage() {
   const handleEditorDidMount = useCallback<OnMount>((editor) => {
     editorRef.current = editor;
     editor.focus();
+    updateEditorHeight();
 
     const domNode = editor.getDomNode();
     if (!domNode) {
       return;
     }
 
+    contentSizeCleanupRef.current?.dispose();
+    contentSizeCleanupRef.current = editor.onDidContentSizeChange(() => {
+      updateEditorHeight();
+    });
+
     pasteCleanupRef.current?.();
     domNode.addEventListener('paste', handleEditorPaste);
     pasteCleanupRef.current = () => {
       domNode.removeEventListener('paste', handleEditorPaste);
     };
-  }, [handleEditorPaste]);
+  }, [handleEditorPaste, updateEditorHeight]);
+
+  useEffect(() => {
+    if (isEditing) {
+      updateEditorHeight();
+    }
+  }, [contentMd, isEditing, updateEditorHeight]);
 
   if (isLoading) {
     return (
@@ -372,7 +413,7 @@ export default function NotePage() {
                         }}
                       >
                         <Editor
-                          height="60vh"
+                          height={`${editorHeight}px`}
                           defaultLanguage="plaintext"
                           value={contentMd}
                           onMount={handleEditorDidMount}
@@ -383,11 +424,21 @@ export default function NotePage() {
                             fontSize: 14,
                             fontFamily: 'Menlo, Monaco, Consolas, monospace',
                             lineHeight: 21,
+                            lineNumbers: 'off',
+                            lineDecorationsWidth: 0,
+                            lineNumbersMinChars: 0,
+                            glyphMargin: false,
                             minimap: { enabled: false },
                             scrollBeyondLastLine: false,
                             tabFocusMode: false,
                             tabSize: 2,
                             insertSpaces: true,
+                            renderLineHighlight: 'none',
+                            renderLineHighlightOnlyWhenFocus: false,
+                            hideCursorInOverviewRuler: true,
+                            overviewRulerBorder: false,
+                            selectionHighlight: false,
+                            occurrencesHighlight: 'off',
                             wordWrap: 'on',
                             wrappingIndent: 'same',
                             quickSuggestions: false,
@@ -399,6 +450,9 @@ export default function NotePage() {
                             overviewRulerLanes: 0,
                             scrollbar: {
                               alwaysConsumeMouseWheel: false,
+                              vertical: 'hidden',
+                              horizontal: 'hidden',
+                              handleMouseWheel: false,
                             },
                           }}
                         />
