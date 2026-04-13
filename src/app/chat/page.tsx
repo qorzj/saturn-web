@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiBaseUrl, apiClient } from '@/lib/api-client';
 import { clearAuthToken, getAuthToken, saveRedirectUrl } from '@/lib/auth';
 import { generateRandomNoteSlug } from '@/lib/note-slug';
@@ -213,7 +214,7 @@ export default function ChatPage() {
           fontSize: '14px',
           fontFamily: 'var(--font-geist-mono), monospace',
         }}>
-          &middot; Quantumizing... ({elapsedSeconds}s) &middot; &darr; {formattedTokens} tokens
+          &middot; Fetching... ({elapsedSeconds}s) &middot; &darr; {formattedTokens} tokens
         </p>
       );
     }
@@ -248,64 +249,104 @@ export default function ChatPage() {
   return (
     <>
       <title>Chat - Binfer Notes</title>
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        backgroundColor: '#f9f9f9',
-      }}>
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            width: '100%',
-            maxWidth: '720px',
-          }}
-        >
-          <textarea
-            value={userPrompt}
-            onChange={(event) => setUserPrompt(event.target.value)}
-            placeholder="Write your prompt..."
-            rows={12}
-            disabled={isSubmitting || !!pendingSlug}
-            style={{
-              width: '100%',
-              minHeight: '280px',
-              padding: '16px',
-              fontSize: '16px',
-              lineHeight: '1.6',
-              color: '#111827',
-              backgroundColor: '#ffffff',
-              border: '1px solid #d1d5db',
-              borderRadius: '4px',
-              resize: 'vertical',
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
-            autoFocus
-          />
-          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              type="submit"
-              disabled={isSubmitting || !!pendingSlug || !userPrompt.trim()}
+      <div className="min-h-screen bg-[#f9f9f9] flex flex-col">
+        <main className="flex-1">
+          <div className="container mx-auto px-4">
+            <div
               style={{
-                height: '40px',
-                padding: '0 20px',
-                fontSize: '16px',
-                borderRadius: '4px',
-                border: '1px solid transparent',
-                backgroundColor: '#111827',
-                color: '#ffffff',
-                cursor: isSubmitting || pendingSlug || !userPrompt.trim() ? 'not-allowed' : 'pointer',
-                opacity: isSubmitting || pendingSlug || !userPrompt.trim() ? 0.6 : 1,
+                minHeight: 'calc(100vh - 61px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px 0',
               }}
             >
-              Submit
-            </button>
+              <form
+                onSubmit={handleSubmit}
+                style={{
+                  width: '100%',
+                  maxWidth: '720px',
+                }}
+              >
+                <textarea
+                  value={userPrompt}
+                  onChange={(event) => setUserPrompt(event.target.value)}
+                  placeholder="Write your prompt..."
+                  rows={12}
+                  disabled={isSubmitting || !!pendingSlug}
+                  style={{
+                    width: '100%',
+                    minHeight: '280px',
+                    padding: '16px',
+                    fontSize: '16px',
+                    lineHeight: '1.6',
+                    color: '#111827',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #9e9e9e',
+                    borderRadius: '2px',
+                    resize: 'vertical',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  autoFocus
+                />
+                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !!pendingSlug || !userPrompt.trim()}
+                    style={{
+                      lineHeight: '1.5715',
+                      position: 'relative',
+                      display: 'inline-block',
+                      fontWeight: '400',
+                      whiteSpace: 'nowrap',
+                      textAlign: 'center',
+                      backgroundImage: 'none',
+                      border: '1px solid transparent',
+                      boxShadow: '0 2px rgba(0,0,0,0.015)',
+                      cursor: isSubmitting || pendingSlug || !userPrompt.trim() ? 'not-allowed' : 'pointer',
+                      transition: 'all .3s cubic-bezier(.645,.045,.355,1)',
+                      height: '40px',
+                      padding: '0 20px',
+                      fontSize: '16px',
+                      borderRadius: '2px',
+                      borderColor: 'rgb(79, 70, 229)',
+                      background: 'rgb(79, 70, 229)',
+                      color: '#fff',
+                      textShadow: '0 -1px 0 rgba(0,0,0,.12)',
+                      opacity: isSubmitting || pendingSlug || !userPrompt.trim() ? '0.6' : '1',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    Submit
+                  </button>
+                </div>
+                {statusContent}
+              </form>
+            </div>
           </div>
-          {statusContent}
-        </form>
+        </main>
+
+        <footer className="page-footer" style={{ backgroundColor: '#E9E9E9' }}>
+          <div className="footer-copyright" style={{ padding: '10px 0' }}>
+            <div className="container mx-auto px-4 text-[#9e9e9e]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+              <div>
+                <Link href="/how-to-use" className="text-[#626262] no-underline">
+                  How to Use
+                </Link>
+              </div>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Link href="/chat" className="text-[#626262] no-underline inline-flex items-center">
+                  <i className="material-icons tiny" style={{ fontSize: '18px' }}>chat</i>
+                </Link>
+                <Link href="/search" className="text-[#626262] no-underline inline-flex items-center">
+                  <i className="material-icons tiny" style={{ fontSize: '18px' }}>search</i>
+                </Link>
+              </div>
+              <div />
+            </div>
+          </div>
+        </footer>
       </div>
     </>
   );

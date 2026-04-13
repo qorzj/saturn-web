@@ -130,13 +130,16 @@ Private
 - Author: qorzj
 - Email: goodhorsezxj@gmail.com
 
-### 页面 (Pages)
+## Pages
 
-| 路由              | 名称                            | 功能描述                              |
-| ----------------- | ------------------------------- | ------------------------------------- |
-| `/`               | **Home (首页)**                 | 生成随机 7 位 slug 并重定向到笔记页面 |
-| `/[slug]`         | **Note Page (笔记页面)**        | 查看/编辑笔记，支持 Markdown 渲染     |
-| `/search`         | **Search Page (搜索页面)**      | 基于向量相似度 (RAG) 搜索笔记         |
-| `/share/[slug]`   | **Shared Note Page (分享页面)** | 公开查看已分享的笔记                  |
-| `/login`          | **Login Page**                  | 用户登录                              |
-| `/login/callback` | **Login Callback**              | OAuth 登录回调                        |
+| Route             | Name              | Description                                                             |
+| ----------------- | ----------------- | ----------------------------------------------------------------------- |
+| `/`               | Home              | Generates a random 7-character slug and redirects to the note page      |
+| `/[slug]`         | Note Page         | Views and edits a note with Markdown rendering                          |
+| `/chat`           | Chat Page         | Submits a prompt to `/api/note/chat` and polls note generation status   |
+| `/search`         | Search Page       | Searches notes with vector similarity                                   |
+| `/share/[slug]`   | Shared Note Page  | Displays a publicly shared note                                         |
+| `/login`          | Login Page        | Starts user authentication                                              |
+| `/login/callback` | Login Callback    | Handles the OAuth callback and stores the returned token                |
+
+The note page and chat page both include a footer navigation area with centered chat/search shortcuts.

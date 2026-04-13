@@ -103,6 +103,12 @@ function SearchContent() {
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && query.trim()) {
+                            e.preventDefault();
+                            router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+                          }
+                        }}
                         placeholder="Search notes..."
                         style={{
                           flex: '1',
