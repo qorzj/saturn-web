@@ -198,6 +198,24 @@ export interface paths {
     };
 }
 export type webhooks = Record<string, never>;
+type JsonRequestBody<T> = {
+    content: {
+        "application/json": T;
+    };
+};
+type JsonResponse<T> = {
+    headers: {
+        [name: string]: unknown;
+    };
+    content: {
+        "application/json": T;
+    };
+};
+type EmptyResponse = {
+    headers: {
+        [name: string]: unknown;
+    };
+};
 export interface components {
     schemas: {
         /** ChatNoteInput */
@@ -231,6 +249,11 @@ export interface components {
             code: string;
             /** Redirecturi */
             redirectUri: string;
+        };
+        /** QiniuUploadTokenResponse */
+        QiniuUploadTokenResponse: {
+            /** Uptoken */
+            uptoken: string;
         };
         /** ListMgrNoteDto */
         ListMgrNoteDto: {
@@ -353,8 +376,10 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
-        responses: never;
+        requestBody: JsonRequestBody<components["schemas"]["LoginRequest"]>;
+        responses: {
+            200: JsonResponse<components["schemas"]["LoginResponse"]>;
+        };
     };
     login_google_oauth2: {
         parameters: {
@@ -363,8 +388,10 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
-        responses: never;
+        requestBody: JsonRequestBody<components["schemas"]["GoogleOAuth2LoginRequest"]>;
+        responses: {
+            200: JsonResponse<components["schemas"]["LoginResponse"]>;
+        };
     };
     get_home_page: {
         parameters: {
@@ -374,7 +401,9 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: JsonResponse<unknown>;
+        };
     };
     post_api_note_save: {
         parameters: {
@@ -383,8 +412,10 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
-        responses: never;
+        requestBody: JsonRequestBody<components["schemas"]["SaveNoteInput"]>;
+        responses: {
+            200: EmptyResponse;
+        };
     };
     post_api_note_chat: {
         parameters: {
@@ -393,18 +424,24 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
-        responses: never;
+        requestBody: JsonRequestBody<components["schemas"]["ChatNoteInput"]>;
+        responses: {
+            200: EmptyResponse;
+        };
     };
     get_chat_status: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                inner_slug: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: JsonResponse<components["schemas"]["ChatStatusDto"]>;
+        };
     };
     get_all_notes: {
         parameters: {
@@ -414,56 +451,78 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: JsonResponse<components["schemas"]["ListMgrNoteDto"][]>;
+        };
     };
     get_note_by_slug: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                inner_slug: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: JsonResponse<components["schemas"]["ListMgrNoteDto"]>;
+        };
     };
     get_shared_note_by_slug: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                slug: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: JsonResponse<components["schemas"]["SharedNoteDto"]>;
+        };
     };
     delete_note_by_slug: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                slug: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: EmptyResponse;
+        };
     };
     search_notes_by_similarity: {
         parameters: {
-            query?: never;
+            query: {
+                query: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: JsonResponse<components["schemas"]["ListSearchNoteDto"][]>;
+        };
     };
     get_qiniu_upload_token: {
         parameters: {
-            query?: never;
+            query: {
+                key: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            200: JsonResponse<components["schemas"]["QiniuUploadTokenResponse"]>;
+        };
     };
 }
