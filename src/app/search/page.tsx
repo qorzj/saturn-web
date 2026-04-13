@@ -266,10 +266,21 @@ function SearchContent() {
 
         <footer className="page-footer" style={{ backgroundColor: '#E9E9E9' }}>
           <div className="footer-copyright" style={{ padding: '10px 0' }}>
-            <div className="container mx-auto px-4 text-[#9e9e9e]">
-              <Link href="/how-to-use" className="text-[#626262] no-underline">
-                How to Use
-              </Link>
+            <div className="container mx-auto px-4 text-[#9e9e9e]" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+              <div>
+                <Link href="/how-to-use" className="text-[#626262] no-underline">
+                  How to Use
+                </Link>
+              </div>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Link href="/chat" className="text-[#626262] no-underline inline-flex items-center">
+                  <i className="material-icons tiny" style={{ fontSize: '18px' }}>chat</i>
+                </Link>
+                <Link href="/search" className="text-[#626262] no-underline inline-flex items-center">
+                  <i className="material-icons tiny" style={{ fontSize: '18px' }}>search</i>
+                </Link>
+              </div>
+              <div />
             </div>
           </div>
         </footer>
