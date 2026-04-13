@@ -166,11 +166,9 @@ export default function ChatPage() {
     return () => window.clearInterval(intervalId);
   }, [pendingSlug, pollStatus]);
 
-  const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const submitChat = useCallback(async () => {
     const trimmedPrompt = userPrompt.trim();
-    if (!trimmedPrompt) {
+    if (!trimmedPrompt || isSubmitting || pendingSlug) {
       return;
     }
 
@@ -203,7 +201,12 @@ export default function ChatPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [userPrompt]);
+  }, [isSubmitting, pendingSlug, userPrompt]);
+
+  const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submitChat();
+  }, [submitChat]);
 
   const statusContent = useMemo(() => {
     if (status === 1 && pendingSlug) {
@@ -271,6 +274,12 @@ export default function ChatPage() {
                 <textarea
                   value={userPrompt}
                   onChange={(event) => setUserPrompt(event.target.value)}
+                  onKeyDown={(event) => {
+                    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                      event.preventDefault();
+                      void submitChat();
+                    }
+                  }}
                   placeholder="Write your prompt..."
                   rows={12}
                   disabled={isSubmitting || !!pendingSlug}
