@@ -13,10 +13,6 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * User login
-         * @description Authenticates a user with username and password. Returns a JWT token for subsequent API calls.
-         */
         post: operations["login"];
         delete?: never;
         options?: never;
@@ -33,11 +29,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Google OAuth2 login
-         * @description Authenticates a user using Google OAuth2 authorization code. Exchanges the code for user info and returns a JWT token.
-         */
-        post: operations["loginGoogleOAuth2"];
+        post: operations["login_google_oauth2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_home_page"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -53,69 +61,37 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Save note
-         * @description Creates or updates a note. If content_md is a single URL, it will grab the web content and generate an AI summary. Empty content deletes the note.
-         */
-        post: operations["postApiNoteSave"];
+        post: operations["post_api_note_save"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/note/search": {
+    "/api/note/chat": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Search notes by similarity
-         * @description Searches notes using vector similarity (RAG). Returns notes with cosine similarity above the threshold (default 0.65), sorted by similarity score in descending order.
-         */
-        get: operations["searchNotesBySimilarity"];
+        get?: never;
         put?: never;
-        post?: never;
+        post: operations["post_api_note_chat"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/public/note/{slug}": {
+    "/api/chat-status/{inner_slug}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get shared note by slug
-         * @description Returns a shared note by its public slug. No authentication required.
-         */
-        get: operations["getSharedNoteBySlug"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/qiniu/uptoken": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Qiniu upload token
-         * @description Returns a Qiniu Cloud upload token for client-side file upload. The token is restricted to image files only (MIME type: image/*) with a maximum size of 5MB. Token is valid for 1 hour by default. Requires authentication.
-         */
-        get: operations["getQiniuUploadToken"];
+        get: operations["get_chat_status"];
         put?: never;
         post?: never;
         delete?: never;
@@ -131,11 +107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * List all notes
-         * @description Returns a paginated list of all notes, optionally filtered by slug
-         */
-        get: operations["getAllNotes"];
+        get: operations["get_all_notes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -151,11 +123,23 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get note by inner slug
-         * @description Returns a single note by its inner slug (user-specific identifier)
-         */
-        get: operations["getNoteBySlug"];
+        get: operations["get_note_by_slug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/note/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_shared_note_by_slug"];
         put?: never;
         post?: never;
         delete?: never;
@@ -174,11 +158,39 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * Delete note by slug
-         * @description Permanently deletes a note
-         */
-        delete: operations["deleteNoteBySlug"];
+        delete: operations["delete_note_by_slug"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/note/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search_notes_by_similarity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/qiniu/uptoken": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_qiniu_upload_token"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -188,241 +200,142 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        LoginRequest: {
-            /**
-             * @description Username for authentication
-             * @example root
-             */
-            userName: string;
-            /**
-             * Format: password
-             * @description Password for authentication
-             * @example your-password
-             */
-            password: string;
+        /** ChatNoteInput */
+        ChatNoteInput: {
+            /** Slug */
+            slug: string;
+            /** Userprompt */
+            userPrompt: string;
         };
+        /** ChatStatusDto */
+        ChatStatusDto: {
+            /** Status */
+            status: number;
+            /**
+             * Total Tokens
+             * @default null
+             */
+            total_tokens: number | null;
+            /**
+             * Message
+             * @default null
+             */
+            message: string | null;
+        };
+        /**
+         * GoogleOAuth2LoginRequest
+         * @description Google OAuth2登录请求
+         */
         GoogleOAuth2LoginRequest: {
-            /**
-             * @description Google OAuth2 authorization code obtained from Google login flow
-             * @example 4/0AY0e-g7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-             */
+            /** Code */
             code: string;
-            /**
-             * Format: uri
-             * @description Redirect URI used in the OAuth2 flow (must match the one configured in Google Console)
-             * @example https://binfer.net/login/callback
-             */
+            /** Redirecturi */
             redirectUri: string;
         };
-        LoginResponse: {
-            /**
-             * @description JWT token for subsequent API calls
-             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-             */
-            token: string;
-        };
-        Failed: {
-            /**
-             * @description Error code (-1 for general errors)
-             * @example -1
-             */
-            code: number;
-            /**
-             * @description Error message
-             * @example 用户名或密码错误
-             */
-            message: string;
-        };
-        SaveNoteInput: {
-            /**
-             * @description Inner slug for user-specific note identification (lowercase letters, digits, and hyphens only). The actual slug will be generated by appending a random 4-character suffix.
-             * @example my-note
-             */
-            slug: string;
-            /**
-             * @description Markdown content. If it's a single URL, web content will be grabbed and summarized.
-             * @example # My Note Title
-             *
-             *     This is my note content in markdown.
-             */
-            contentMd: string;
-            /**
-             * @description Sharing status (0: private, 1: shared). Private notes cannot be edited by others.
-             * @example 0
-             * @enum {integer}
-             */
-            isShared: 0 | 1;
-        };
+        /** ListMgrNoteDto */
         ListMgrNoteDto: {
-            /**
-             * @description Note identifier
-             * @example my-note-123
-             */
+            /** Slug */
             slug: string;
-            /**
-             * @description Internal slug for user-specific note identification
-             * @example my-private-note
-             */
-            innerSlug?: string | null;
-            /**
-             * @description Markdown content
-             * @example # My Note
-             *
-             *     Content here
-             */
+            /** Innerslug */
+            innerSlug: string | null;
+            /** Contentmd */
             contentMd: string;
-            /**
-             * @description Note title (extracted from first H1 heading or defaults to slug)
-             * @example My Note
-             */
+            /** Title */
             title: string;
+            /** Contenthtml */
+            contentHtml: string | null;
+            /** Isshared */
+            isShared: number;
             /**
-             * @deprecated
-             * @description Rendered HTML content (deprecated - no longer used)
-             * @example <h1>My Note</h1>
-             *     <p>Content here</p>
-             */
-            contentHtml: string;
-            /**
-             * @description Sharing status (0: private, 1: shared)
-             * @example 0
-             * @enum {integer}
-             */
-            isShared: 0 | 1;
-            /**
+             * Createtime
              * Format: date-time
-             * @description Creation timestamp
-             * @example 2024-01-15T10:30:00Z
              */
             createTime: string;
             /**
+             * Updatetime
              * Format: date-time
-             * @description Last update timestamp
-             * @example 2024-01-16T15:45:00Z
              */
             updateTime: string;
-            /**
-             * @description IP address of creator
-             * @example 192.168.1.100
-             */
+            /** Createip */
             createIp: string;
-            /**
-             * @description IP address of last updater
-             * @example 192.168.1.100
-             */
+            /** Updateip */
             updateIp: string;
-            /**
-             * @description Unique visitors count
-             * @example 42
-             */
+            /** Uv */
             uv: number;
+            /**
+             * Embedding
+             * @default null
+             */
+            embedding: number[] | null;
         };
-        PagedListMgrNoteDto: {
-            /** @description List of notes */
-            items: components["schemas"]["ListMgrNoteDto"][];
-            /**
-             * @description Total number of notes
-             * @example 100
-             */
-            total: number;
-            /**
-             * @description Current page number (1-indexed)
-             * @example 1
-             */
-            page: number;
-            /**
-             * @description Page size or 'ALL' for all items
-             * @example ALL
-             */
-            size: string;
-        };
-        SharedNoteDto: {
-            /**
-             * @description Public note slug (with random suffix)
-             * @example my-note-x7a2
-             */
-            slug: string;
-            /**
-             * @description Markdown content
-             * @example # My Note
-             *
-             *     Content here
-             */
-            contentMd: string;
-            /**
-             * @description Sharing status (0: private, 1: shared)
-             * @example 1
-             * @enum {integer}
-             */
-            isShared: 0 | 1;
-            /**
-             * Format: date-time
-             * @description Creation timestamp
-             * @example 2024-01-15T10:30:00Z
-             */
-            createTime: string;
-            /**
-             * Format: date-time
-             * @description Last update timestamp
-             * @example 2024-01-16T15:45:00Z
-             */
-            updateTime: string;
-        };
+        /** ListSearchNoteDto */
         ListSearchNoteDto: {
-            /**
-             * @description Note identifier
-             * @example python-async-guide
-             */
+            /** Slug */
             slug: string;
-            /**
-             * @description Internal slug for user-specific note identification
-             * @example my-note
-             */
-            innerSlug?: string | null;
-            /**
-             * @description Note title
-             * @example Python Async Programming Guide
-             */
+            /** Innerslug */
+            innerSlug: string | null;
+            /** Title */
             title: string;
-            /**
-             * @description Markdown content
-             * @example # Python Async Programming
-             *
-             *     This is a guide about async programming...
-             */
+            /** Contentmd */
             contentMd: string;
-            /**
-             * Format: float
-             * @description Cosine similarity score (0-1), where 1 means identical and 0 means completely unrelated
-             * @example 0.8523
-             */
+            /** Similarity */
             similarity: number;
             /**
+             * Createtime
              * Format: date-time
-             * @description Creation timestamp
-             * @example 2024-01-15T10:30:00Z
              */
             createTime: string;
             /**
+             * Updatetime
              * Format: date-time
-             * @description Last update timestamp
-             * @example 2024-01-16T15:45:00Z
              */
             updateTime: string;
         };
-        QiniuUploadTokenResponse: {
-            /**
-             * @description Qiniu upload token. This token is valid for 1 hour and restricted to image files (MIME type: image/*) with max size of 5MB.
-             * @example YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkw:dGhpc2lzYXRlc3R0b2tlbg==:eyJzY29wZSI6Imxlc3N3ZWI6YmluZmVyL25vdGVzL215LWltYWdlLmpwZyIsImRlYWRsaW5lIjoxNjA1MjY0MDAwLCJmc2l6ZUxpbWl0Ijo1MjQyODgwLCJtaW1lTGltaXQiOiJpbWFnZS8qIn0=
-             */
-            uptoken: string;
+        /**
+         * LoginRequest
+         * @description 登录请求
+         */
+        LoginRequest: {
+            /** Username */
+            userName: string;
+            /** Password */
+            password: string;
         };
-        Error: {
+        /**
+         * LoginResponse
+         * @description 登录响应
+         */
+        LoginResponse: {
+            /** Token */
+            token: string;
+        };
+        /** SaveNoteInput */
+        SaveNoteInput: {
+            /** Slug */
+            slug: string;
+            /** Contentmd */
+            contentMd: string;
+            /** Isshared */
+            isShared: number;
+        };
+        /** SharedNoteDto */
+        SharedNoteDto: {
+            /** Slug */
+            slug: string;
+            /** Contentmd */
+            contentMd: string;
+            /** Isshared */
+            isShared: number;
             /**
-             * @description Error message
-             * @example note is not shared
+             * Createtime
+             * Format: date-time
              */
-            error?: string;
+            createTime: string;
+            /**
+             * Updatetime
+             * Format: date-time
+             */
+            updateTime: string;
         };
     };
     responses: never;
@@ -440,255 +353,117 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description Login successful */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LoginResponse"];
-                };
-            };
-            /** @description Invalid username or password */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Failed"];
-                };
-            };
-        };
+        requestBody?: never;
+        responses: never;
     };
-    loginGoogleOAuth2: {
+    login_google_oauth2: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GoogleOAuth2LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description Login successful */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LoginResponse"];
-                };
-            };
-            /** @description Invalid authorization code or email not verified */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Failed"];
-                };
-            };
-        };
+        requestBody?: never;
+        responses: never;
     };
-    postApiNoteSave: {
+    get_home_page: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SaveNoteInput"];
-            };
-        };
-        responses: {
-            /** @description Note saved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-            /** @description Note is not shared or invalid slug format */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Failed"];
-                };
-            };
-        };
+        requestBody?: never;
+        responses: never;
     };
-    searchNotesBySimilarity: {
+    post_api_note_save: {
         parameters: {
-            query: {
-                /** @description Search query text */
-                query: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description List of similar notes (not paginated) */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListSearchNoteDto"][];
-                };
-            };
-        };
+        responses: never;
     };
-    getSharedNoteBySlug: {
+    post_api_note_chat: {
         parameters: {
             query?: never;
-            header?: never;
-            path: {
-                /** @description Public note slug (with random suffix) */
-                slug: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Shared note details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SharedNoteDto"];
-                };
-            };
-            /** @description Note not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getQiniuUploadToken: {
-        parameters: {
-            query: {
-                /** @description Upload file key (path). Will be prefixed with the configured path_prefix. */
-                key: string;
-            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description Upload token generated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QiniuUploadTokenResponse"];
-                };
-            };
-            /** @description Unauthorized - Invalid or missing authentication token */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        responses: never;
     };
-    getAllNotes: {
+    get_chat_status: {
         parameters: {
-            query?: {
-                /** @description Filter by specific slug */
-                slug?: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description List of notes */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PagedListMgrNoteDto"];
-                };
-            };
-        };
+        responses: never;
     };
-    getNoteBySlug: {
+    get_all_notes: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Inner slug - user-specific note identifier */
-                inner_slug: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description Note details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListMgrNoteDto"];
-                };
-            };
-            /** @description Note not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        responses: never;
     };
-    deleteNoteBySlug: {
+    get_note_by_slug: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Note identifier */
-                slug: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description Note deleted successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
+        responses: never;
+    };
+    get_shared_note_by_slug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
+        requestBody?: never;
+        responses: never;
+    };
+    delete_note_by_slug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
+    };
+    search_notes_by_similarity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
+    };
+    get_qiniu_upload_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: never;
     };
 }

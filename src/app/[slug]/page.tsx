@@ -564,7 +564,10 @@ export default function NotePage() {
                   </button>
                 )}
               </div>
-              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center' }}>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Link href="/chat" className="text-[#626262] no-underline inline-flex items-center">
+                  <i className="material-icons tiny" style={{ fontSize: '18px' }}>chat</i>
+                </Link>
                 <Link href="/search" className="text-[#626262] no-underline inline-flex items-center">
                   <i className="material-icons tiny" style={{ fontSize: '18px' }}>search</i>
                 </Link>

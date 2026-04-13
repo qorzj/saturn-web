@@ -3,10 +3,10 @@ import type { paths } from "./api-schema";
 import { getAuthToken, clearAuthToken, saveRedirectUrl } from "./auth";
 
 // Get base URL from environment variable, fallback to production
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://www.binfer.net";
+export const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://www.binfer.net";
 
 export const apiClient = createClient<paths>({
-  baseUrl,
+  baseUrl: apiBaseUrl,
 });
 
 // Request interceptor: Add Bearer token to all requests

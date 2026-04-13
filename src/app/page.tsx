@@ -2,18 +2,13 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { generateRandomNoteSlug } from '@/lib/note-slug';
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Generate random slug (7 characters: lowercase + digits)
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    const slug = Array.from({ length: 7 }, () =>
-      chars[Math.floor(Math.random() * chars.length)]
-    ).join('');
-
-    router.push(`/${slug}`);
+    router.push(`/${generateRandomNoteSlug()}`);
   }, [router]);
 
   return (

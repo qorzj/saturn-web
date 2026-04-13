@@ -21,457 +21,222 @@
   "paths": {
     "/public/login": {
       "post": {
-        "summary": "User login",
-        "description": "Authenticates a user with username and password. Returns a JWT token for subsequent API calls.",
-        "operationId": "login",
-        "tags": ["Authentication"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Login successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid username or password",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Failed"
-                }
-              }
-            }
-          }
-        }
+        "operationId": "login"
       }
     },
     "/public/login-google-oauth2": {
       "post": {
-        "summary": "Google OAuth2 login",
-        "description": "Authenticates a user using Google OAuth2 authorization code. Exchanges the code for user info and returns a JWT token.",
-        "operationId": "loginGoogleOAuth2",
-        "tags": ["Authentication"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GoogleOAuth2LoginRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Login successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid authorization code or email not verified",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Failed"
-                }
-              }
-            }
-          }
-        }
+        "operationId": "login_google_oauth2"
+      }
+    },
+    "/": {
+      "get": {
+        "operationId": "get_home_page"
       }
     },
     "/api/note/save": {
       "post": {
-        "summary": "Save note",
-        "description": "Creates or updates a note. If content_md is a single URL, it will grab the web content and generate an AI summary. Empty content deletes the note.",
-        "operationId": "postApiNoteSave",
-        "tags": ["Note API"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveNoteInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Note saved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Note is not shared or invalid slug format",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Failed"
-                }
-              }
-            }
-          }
-        }
+        "operationId": "post_api_note_save"
       }
     },
-    "/api/note/search": {
-      "get": {
-        "summary": "Search notes by similarity",
-        "description": "Searches notes using vector similarity (RAG). Returns notes with cosine similarity above the threshold (default 0.65), sorted by similarity score in descending order.",
-        "operationId": "searchNotesBySimilarity",
-        "tags": ["Note API"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "required": true,
-            "description": "Search query text",
-            "schema": {
-              "type": "string",
-              "example": "Python async programming"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of similar notes (not paginated)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ListSearchNoteDto"
-                  }
-                }
-              }
-            }
-          }
-        }
+    "/api/note/chat": {
+      "post": {
+        "operationId": "post_api_note_chat"
       }
     },
-    "/public/note/{slug}": {
+    "/api/chat-status/{inner_slug}": {
       "get": {
-        "summary": "Get shared note by slug",
-        "description": "Returns a shared note by its public slug. No authentication required.",
-        "operationId": "getSharedNoteBySlug",
-        "tags": ["Note API"],
-        "parameters": [
-          {
-            "name": "slug",
-            "in": "path",
-            "required": true,
-            "description": "Public note slug (with random suffix)",
-            "schema": {
-              "type": "string",
-              "example": "my-note-x7a2"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Shared note details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SharedNoteDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Note not found"
-          }
-        }
-      }
-    },
-    "/api/qiniu/uptoken": {
-      "get": {
-        "summary": "Get Qiniu upload token",
-        "description": "Returns a Qiniu Cloud upload token for client-side file upload. The token is restricted to image files only (MIME type: image/*) with a maximum size of 5MB. Token is valid for 1 hour by default. Requires authentication.",
-        "operationId": "getQiniuUploadToken",
-        "tags": ["File Upload"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "key",
-            "in": "query",
-            "required": true,
-            "description": "Upload file key (path). Will be prefixed with the configured path_prefix.",
-            "schema": {
-              "type": "string",
-              "example": "notes/my-image.jpg"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Upload token generated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QiniuUploadTokenResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing authentication token"
-          }
-        }
+        "operationId": "get_chat_status"
       }
     },
     "/mgr/note": {
       "get": {
-        "summary": "List all notes",
-        "description": "Returns a paginated list of all notes, optionally filtered by slug",
-        "operationId": "getAllNotes",
-        "tags": ["Note Management"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "slug",
-            "in": "query",
-            "required": false,
-            "description": "Filter by specific slug",
-            "schema": {
-              "type": "string",
-              "example": "my-note-123"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of notes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PagedListMgrNoteDto"
-                }
-              }
-            }
-          }
-        }
+        "operationId": "get_all_notes"
       }
     },
     "/mgr/note/{inner_slug}": {
       "get": {
-        "summary": "Get note by inner slug",
-        "description": "Returns a single note by its inner slug (user-specific identifier)",
-        "operationId": "getNoteBySlug",
-        "tags": ["Note Management"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "inner_slug",
-            "in": "path",
-            "required": true,
-            "description": "Inner slug - user-specific note identifier",
-            "schema": {
-              "type": "string",
-              "example": "my-note"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Note details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListMgrNoteDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Note not found"
-          }
-        }
+        "operationId": "get_note_by_slug"
+      }
+    },
+    "/public/note/{slug}": {
+      "get": {
+        "operationId": "get_shared_note_by_slug"
       }
     },
     "/mgr/note/{slug}": {
       "delete": {
-        "summary": "Delete note by slug",
-        "description": "Permanently deletes a note",
-        "operationId": "deleteNoteBySlug",
-        "tags": ["Note Management"],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "slug",
-            "in": "path",
-            "required": true,
-            "description": "Note identifier",
-            "schema": {
-              "type": "string",
-              "example": "my-note-123"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Note deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
+        "operationId": "delete_note_by_slug"
+      }
+    },
+    "/api/note/search": {
+      "get": {
+        "operationId": "search_notes_by_similarity"
+      }
+    },
+    "/api/qiniu/uptoken": {
+      "get": {
+        "operationId": "get_qiniu_upload_token"
       }
     }
   },
   "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT token obtained from /public/login endpoint. Include in Authorization header as 'Bearer <token>'"
-      }
-    },
     "schemas": {
-      "LoginRequest": {
-        "type": "object",
-        "required": ["userName", "password"],
-        "properties": {
-          "userName": {
-            "type": "string",
-            "description": "Username for authentication",
-            "example": "root"
-          },
-          "password": {
-            "type": "string",
-            "description": "Password for authentication",
-            "format": "password",
-            "example": "your-password"
-          }
-        }
-      },
-      "GoogleOAuth2LoginRequest": {
-        "type": "object",
-        "required": ["code", "redirectUri"],
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Google OAuth2 authorization code obtained from Google login flow",
-            "example": "4/0AY0e-g7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-          },
-          "redirectUri": {
-            "type": "string",
-            "description": "Redirect URI used in the OAuth2 flow (must match the one configured in Google Console)",
-            "format": "uri",
-            "example": "https://binfer.net/login/callback"
-          }
-        }
-      },
-      "LoginResponse": {
-        "type": "object",
-        "required": ["token"],
-        "properties": {
-          "token": {
-            "type": "string",
-            "description": "JWT token for subsequent API calls",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          }
-        }
-      },
-      "Failed": {
-        "type": "object",
-        "required": ["code", "message"],
-        "properties": {
-          "code": {
-            "type": "integer",
-            "description": "Error code (-1 for general errors)",
-            "example": -1
-          },
-          "message": {
-            "type": "string",
-            "description": "Error message",
-            "example": "用户名或密码错误"
-          }
-        }
-      },
-      "SaveNoteInput": {
-        "type": "object",
-        "required": ["slug", "contentMd", "isShared"],
+      "ChatNoteInput": {
         "properties": {
           "slug": {
-            "type": "string",
-            "description": "Inner slug for user-specific note identification (lowercase letters, digits, and hyphens only). The actual slug will be generated by appending a random 4-character suffix.",
-            "pattern": "^[a-z0-9-]+$",
-            "example": "my-note"
+            "title": "Slug",
+            "type": "string"
           },
-          "contentMd": {
-            "type": "string",
-            "description": "Markdown content. If it's a single URL, web content will be grabbed and summarized.",
-            "example": "# My Note Title\n\nThis is my note content in markdown."
-          },
-          "isShared": {
-            "type": "integer",
-            "description": "Sharing status (0: private, 1: shared). Private notes cannot be edited by others.",
-            "enum": [0, 1],
-            "example": 0
+          "userPrompt": {
+            "title": "Userprompt",
+            "type": "string"
           }
-        }
-      },
-      "ListMgrNoteDto": {
-        "type": "object",
+        },
         "required": [
           "slug",
+          "userPrompt"
+        ],
+        "title": "ChatNoteInput",
+        "type": "object"
+      },
+      "ChatStatusDto": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          },
+          "total_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Total Tokens"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Message"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ChatStatusDto",
+        "type": "object"
+      },
+      "GoogleOAuth2LoginRequest": {
+        "description": "Google OAuth2登录请求",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "redirectUri": {
+            "title": "Redirecturi",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "redirectUri"
+        ],
+        "title": "GoogleOAuth2LoginRequest",
+        "type": "object"
+      },
+      "ListMgrNoteDto": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "innerSlug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Innerslug"
+          },
+          "contentMd": {
+            "title": "Contentmd",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "contentHtml": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contenthtml"
+          },
+          "isShared": {
+            "title": "Isshared",
+            "type": "integer"
+          },
+          "createTime": {
+            "format": "date-time",
+            "title": "Createtime",
+            "type": "string"
+          },
+          "updateTime": {
+            "format": "date-time",
+            "title": "Updatetime",
+            "type": "string"
+          },
+          "createIp": {
+            "title": "Createip",
+            "type": "string"
+          },
+          "updateIp": {
+            "title": "Updateip",
+            "type": "string"
+          },
+          "uv": {
+            "title": "Uv",
+            "type": "integer"
+          },
+          "embedding": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Embedding"
+          }
+        },
+        "required": [
+          "slug",
+          "innerSlug",
           "contentMd",
           "title",
           "contentHtml",
@@ -482,99 +247,142 @@
           "updateIp",
           "uv"
         ],
+        "title": "ListMgrNoteDto",
+        "type": "object"
+      },
+      "ListSearchNoteDto": {
         "properties": {
           "slug": {
-            "type": "string",
-            "description": "Note identifier",
-            "example": "my-note-123"
+            "title": "Slug",
+            "type": "string"
           },
           "innerSlug": {
-            "type": "string",
-            "description": "Internal slug for user-specific note identification",
-            "nullable": true,
-            "example": "my-private-note"
-          },
-          "contentMd": {
-            "type": "string",
-            "description": "Markdown content",
-            "example": "# My Note\n\nContent here"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Innerslug"
           },
           "title": {
-            "type": "string",
-            "description": "Note title (extracted from first H1 heading or defaults to slug)",
-            "example": "My Note"
+            "title": "Title",
+            "type": "string"
           },
-          "contentHtml": {
-            "type": "string",
-            "description": "Rendered HTML content (deprecated - no longer used)",
-            "deprecated": true,
-            "example": "<h1>My Note</h1>\n<p>Content here</p>"
+          "contentMd": {
+            "title": "Contentmd",
+            "type": "string"
           },
-          "isShared": {
-            "type": "integer",
-            "description": "Sharing status (0: private, 1: shared)",
-            "enum": [0, 1],
-            "example": 0
+          "similarity": {
+            "title": "Similarity",
+            "type": "number"
           },
           "createTime": {
-            "type": "string",
             "format": "date-time",
-            "description": "Creation timestamp",
-            "example": "2024-01-15T10:30:00Z"
+            "title": "Createtime",
+            "type": "string"
           },
           "updateTime": {
-            "type": "string",
             "format": "date-time",
-            "description": "Last update timestamp",
-            "example": "2024-01-16T15:45:00Z"
-          },
-          "createIp": {
-            "type": "string",
-            "description": "IP address of creator",
-            "example": "192.168.1.100"
-          },
-          "updateIp": {
-            "type": "string",
-            "description": "IP address of last updater",
-            "example": "192.168.1.100"
-          },
-          "uv": {
-            "type": "integer",
-            "description": "Unique visitors count",
-            "example": 42
+            "title": "Updatetime",
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "slug",
+          "innerSlug",
+          "title",
+          "contentMd",
+          "similarity",
+          "createTime",
+          "updateTime"
+        ],
+        "title": "ListSearchNoteDto",
+        "type": "object"
       },
-      "PagedListMgrNoteDto": {
-        "type": "object",
-        "required": ["items", "total", "page", "size"],
+      "LoginRequest": {
+        "description": "登录请求",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ListMgrNoteDto"
-            },
-            "description": "List of notes"
+          "userName": {
+            "title": "Username",
+            "type": "string"
           },
-          "total": {
-            "type": "integer",
-            "description": "Total number of notes",
-            "example": 100
-          },
-          "page": {
-            "type": "integer",
-            "description": "Current page number (1-indexed)",
-            "example": 1
-          },
-          "size": {
-            "type": "string",
-            "description": "Page size or 'ALL' for all items",
-            "example": "ALL"
+          "password": {
+            "title": "Password",
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "userName",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "LoginResponse": {
+        "description": "登录响应",
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "LoginResponse",
+        "type": "object"
+      },
+      "SaveNoteInput": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "contentMd": {
+            "title": "Contentmd",
+            "type": "string"
+          },
+          "isShared": {
+            "title": "Isshared",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "contentMd",
+          "isShared"
+        ],
+        "title": "SaveNoteInput",
+        "type": "object"
       },
       "SharedNoteDto": {
-        "type": "object",
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "contentMd": {
+            "title": "Contentmd",
+            "type": "string"
+          },
+          "isShared": {
+            "title": "Isshared",
+            "type": "integer"
+          },
+          "createTime": {
+            "format": "date-time",
+            "title": "Createtime",
+            "type": "string"
+          },
+          "updateTime": {
+            "format": "date-time",
+            "title": "Updatetime",
+            "type": "string"
+          }
+        },
         "required": [
           "slug",
           "contentMd",
@@ -582,111 +390,8 @@
           "createTime",
           "updateTime"
         ],
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Public note slug (with random suffix)",
-            "example": "my-note-x7a2"
-          },
-          "contentMd": {
-            "type": "string",
-            "description": "Markdown content",
-            "example": "# My Note\n\nContent here"
-          },
-          "isShared": {
-            "type": "integer",
-            "description": "Sharing status (0: private, 1: shared)",
-            "enum": [0, 1],
-            "example": 1
-          },
-          "createTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Creation timestamp",
-            "example": "2024-01-15T10:30:00Z"
-          },
-          "updateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Last update timestamp",
-            "example": "2024-01-16T15:45:00Z"
-          }
-        }
-      },
-      "ListSearchNoteDto": {
-        "type": "object",
-        "required": [
-          "slug",
-          "title",
-          "contentMd",
-          "similarity",
-          "createTime",
-          "updateTime"
-        ],
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Note identifier",
-            "example": "python-async-guide"
-          },
-          "innerSlug": {
-            "type": "string",
-            "description": "Internal slug for user-specific note identification",
-            "nullable": true,
-            "example": "my-note"
-          },
-          "title": {
-            "type": "string",
-            "description": "Note title",
-            "example": "Python Async Programming Guide"
-          },
-          "contentMd": {
-            "type": "string",
-            "description": "Markdown content",
-            "example": "# Python Async Programming\n\nThis is a guide about async programming..."
-          },
-          "similarity": {
-            "type": "number",
-            "format": "float",
-            "description": "Cosine similarity score (0-1), where 1 means identical and 0 means completely unrelated",
-            "minimum": 0,
-            "maximum": 1,
-            "example": 0.8523
-          },
-          "createTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Creation timestamp",
-            "example": "2024-01-15T10:30:00Z"
-          },
-          "updateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Last update timestamp",
-            "example": "2024-01-16T15:45:00Z"
-          }
-        }
-      },
-      "QiniuUploadTokenResponse": {
-        "type": "object",
-        "required": ["uptoken"],
-        "properties": {
-          "uptoken": {
-            "type": "string",
-            "description": "Qiniu upload token. This token is valid for 1 hour and restricted to image files (MIME type: image/*) with max size of 5MB.",
-            "example": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY3ODkw:dGhpc2lzYXRlc3R0b2tlbg==:eyJzY29wZSI6Imxlc3N3ZWI6YmluZmVyL25vdGVzL215LWltYWdlLmpwZyIsImRlYWRsaW5lIjoxNjA1MjY0MDAwLCJmc2l6ZUxpbWl0Ijo1MjQyODgwLCJtaW1lTGltaXQiOiJpbWFnZS8qIn0="
-          }
-        }
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error message",
-            "example": "note is not shared"
-          }
-        }
+        "title": "SharedNoteDto",
+        "type": "object"
       }
     }
   },
